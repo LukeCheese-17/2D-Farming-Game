@@ -13,7 +13,6 @@ const MESSAGE_TIME := 1.5
 @onready var _tool_label: Label = $Root/ToolLabel
 @onready var _prompt_label: Label = $Root/PromptLabel
 @onready var _message_label: Label = $Root/MessageLabel
-@onready var _fade: ColorRect = $Root/Fade
 
 var _slots: Array[Panel] = []
 var _seeds_slot_icon: TextureRect
@@ -104,8 +103,7 @@ func _refresh_toolbar() -> void:
 	var tool_name: String = Tools.NAMES[GameState.current_tool]
 	match GameState.current_tool:
 		Tools.Type.SEEDS:
-			tool_name = "%s seeds (%d) - press 3 to switch" % [
-				crop.display_name, GameState.get_item_count(crop.seed_item)]
+			tool_name = "%s seeds (%d)" % [crop.display_name, GameState.get_item_count(crop.seed_item)]
 		Tools.Type.HAND:
 			tool_name = "Hand - harvest ripe crops"
 	_tool_label.text = tool_name
@@ -140,6 +138,3 @@ func _show_message(text: String) -> void:
 
 func _on_day_changed(day: int) -> void:
 	_day_label.text = "Day %d" % day
-	_fade.color.a = 1.0
-	create_tween().tween_property(_fade, "color:a", 0.0, 0.8)
-	_show_message("Good morning! Day %d" % day)

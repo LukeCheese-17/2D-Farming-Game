@@ -4,14 +4,6 @@
 [ext_resource type="Texture2D" uid="uid://b5q2rjb2t2hum" path="res://assets/Characters/Basic Charakter Actions.png" id="1_actions"]
 [ext_resource type="Texture2D" uid="uid://bvsdm2oj6bt6c" path="res://assets/Characters/Basic Charakter Spritesheet.png" id="2_sheet"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_1"]
-atlas = ExtResource("1_actions")
-region = Rect2(0, 240, 48, 48)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_2"]
-atlas = ExtResource("1_actions")
-region = Rect2(48, 240, 48, 48)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_3"]
 atlas = ExtResource("1_actions")
 region = Rect2(0, 192, 48, 48)
@@ -19,22 +11,6 @@ region = Rect2(0, 192, 48, 48)
 [sub_resource type="AtlasTexture" id="AtlasTexture_4"]
 atlas = ExtResource("1_actions")
 region = Rect2(48, 192, 48, 48)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_5"]
-atlas = ExtResource("1_actions")
-region = Rect2(0, 288, 48, 48)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_6"]
-atlas = ExtResource("1_actions")
-region = Rect2(48, 288, 48, 48)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_7"]
-atlas = ExtResource("1_actions")
-region = Rect2(0, 336, 48, 48)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_8"]
-atlas = ExtResource("1_actions")
-region = Rect2(48, 336, 48, 48)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_9"]
 atlas = ExtResource("2_sheet")
@@ -168,17 +144,6 @@ region = Rect2(48, 528, 48, 48)
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_1")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_2")
-}],
-"loop": false,
-"name": &"chopping_back",
-"speed": 4.0
-}, {
-"frames": [{
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_3")
 }, {
 "duration": 1.0,
@@ -186,28 +151,6 @@ animations = [{
 }],
 "loop": false,
 "name": &"chopping_front",
-"speed": 4.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_5")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_6")
-}],
-"loop": false,
-"name": &"chopping_left",
-"speed": 4.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_7")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_8")
-}],
-"loop": false,
-"name": &"chopping_right",
 "speed": 4.0
 }, {
 "frames": [{

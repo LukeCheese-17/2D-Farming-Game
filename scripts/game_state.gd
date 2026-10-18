@@ -13,12 +13,10 @@ const STARTING_SEEDS := 5
 ## Every crop the player can grow. Add a new CropData .tres here to add a crop.
 var crops: Array[CropData] = [
 	preload("res://data/crops/wheat.tres"),
-	preload("res://data/crops/tomato.tres"),
 ]
 
 var day := 1
 var current_tool := Tools.Type.HOE
-var selected_crop_index := 0
 
 var _items: Dictionary[StringName, int] = {}
 
@@ -29,13 +27,10 @@ func _ready() -> void:
 
 
 func get_selected_crop() -> CropData:
-	return crops[selected_crop_index]
+	return crops[0]
 
 
-## Selecting the seeds tool again cycles through the crop types.
 func select_tool(tool: Tools.Type) -> void:
-	if tool == Tools.Type.SEEDS and current_tool == Tools.Type.SEEDS:
-		selected_crop_index = (selected_crop_index + 1) % crops.size()
 	current_tool = tool
 	tool_changed.emit()
 

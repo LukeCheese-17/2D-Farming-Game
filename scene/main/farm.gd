@@ -102,27 +102,19 @@ func use_tool(tool: Tools.Type, cell: Vector2i) -> void:
 
 func _till(cell: Vector2i) -> void:
 	if not can_till(cell):
-		GameState.post_message("Can't till here")
 		return
 	tilled_layer.set_cells_terrain_connect([cell], DIRT_TERRAIN_SET, DIRT_TERRAIN)
 
 
 func _water(cell: Vector2i) -> void:
-	if not is_tilled(cell):
-		GameState.post_message("Water tilled soil")
-		return
-	if is_watered(cell):
+	if not can_water(cell):
 		return
 	_watered[cell] = true
 	wet_layer.set_cells_terrain_connect([cell], DIRT_TERRAIN_SET, DIRT_TERRAIN)
 
 
 func _plant(cell: Vector2i, crop_data: CropData) -> void:
-	if not can_plant(cell):
-		GameState.post_message("Plant on empty tilled soil")
-		return
-	if not GameState.remove_item(crop_data.seed_item):
-		GameState.post_message("No %s seeds left" % crop_data.display_name.to_lower())
+	if not can_plant(cell) or not GameState.remove_item(crop_data.seed_item):
 		return
 	var crop: Crop = CROP_SCENE.instantiate()
 	crop.setup(crop_data)
