@@ -1,0 +1,28 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scene/atmosphere/screen_mood.gd" id="1_mood"]
+[ext_resource type="Shader" path="res://scene/atmosphere/screen_mood.gdshader" id="2_shader"]
+[ext_resource type="AudioStream" path="res://assets/Generated/wind.wav" id="3_wind"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mood"]
+shader = ExtResource("2_shader")
+shader_parameter/tint = Color(0.92, 0.9, 0.88, 1)
+shader_parameter/desaturation = 0.3
+shader_parameter/vignette = 0.35
+
+[node name="ScreenMood" type="CanvasLayer"]
+script = ExtResource("1_mood")
+
+[node name="Screen" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_mood")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Wind" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_wind")
+volume_db = -20.0
+autoplay = true

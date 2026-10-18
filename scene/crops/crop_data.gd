@@ -9,19 +9,11 @@ extends Resource
 @export var stage_textures: Array[Texture2D] = []
 ## Number of watered days needed to go from planted to ripe.
 @export var days_to_grow := 3
+## The item used to plant this crop.
+@export var seed: ItemData
+## The item given when harvesting.
+@export var produce: ItemData
 @export var harvest_amount := 1
-@export var seed_icon: Texture2D
-@export var produce_icon: Texture2D
-
-## Inventory item id for this crop's seeds.
-var seed_item: StringName:
-	get:
-		return StringName("%s_seeds" % id)
-
-## Inventory item id for this crop's harvested produce.
-var produce_item: StringName:
-	get:
-		return id
 
 
 ## Growth stage (index into stage_textures) after the given number of watered days.

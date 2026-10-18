@@ -149,13 +149,19 @@ The horror comes from mood and suggestion only. Nothing ever attacks, chases or 
 
 ## Open questions
 
-Things the vision doesn't settle yet. Decide before building the related part.
+Things the vision doesn't settle yet. Each has a **provisional answer** chosen so the game could be built
+(2026-10-19); change any of them and the game can be adjusted.
 
-- **What is money for?** Buying seeds, animals or animal feed, fixing up the house, or only paying off the phone tasks?
-- **Do animals need care?** For example, feeding them each day or they stop producing.
-- **What happens when a phone task's deadline is missed?** Nothing, a lost reward, or something unsettling (but still no monster).
-- **Is there an ending or a story?** For example, learning who the caller is, or what is watching.
-- **Sound:** the atmosphere (ATM) and the phone (PHN-1) depend heavily on audio, so sound is now needed for those parts.
+- **What is money for?** *Provisional:* buying seeds. Using the phone when it isn't ringing lets you order 5 wheat seeds for 40g; they're left at the door the next morning. (Without this, the starting seeds run out and farming stops.)
+- **Do animals need care?** *Provisional:* no. Each animal has one product per day.
+- **What happens when a phone task's deadline is missed?** *Provisional:* the job is lost with no reward, and the caller mentions it on his next call ("You let me down").
+- **Is there an ending or a story?** *Provisional:* not yet. The caller repeats his jobs after the sixth.
+- **Sound:** *Provisional:* simple generated placeholder sounds (phone ring, footsteps, wind, splash, bite, door creak) in `assets/Generated/`. Replace them with real recordings when available.
+
+Other choices made while building:
+- The camera is zoomed in 2x, so you only see the area around you (helps the "something is out there" feeling).
+- A day runs from 06:00; 10 in-game minutes pass every 7 seconds. Staying up until 02:00 makes you pass out and wake up in bed.
+- Some nights the phone rings and no one speaks (PHN-7 / ATM-2).
 
 ## Out of scope (for now)
 

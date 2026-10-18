@@ -1,0 +1,120 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" uid="uid://dgnadpl5bf1uo" path="res://assets/Tilesets/Wooden_House_Roof_Tilset.png" id="1_roof"]
+[ext_resource type="Texture2D" uid="uid://cpwdgsqkqw6e6" path="res://assets/Tilesets/Wooden_House_Walls_Tilset.png" id="2_walls"]
+[ext_resource type="Texture2D" uid="uid://ci67nfur0u0xu" path="res://assets/Tilesets/Doors.png" id="3_doors"]
+[ext_resource type="Script" path="res://scripts/interact_area.gd" id="4_interact"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_roof"]
+atlas = ExtResource("1_roof")
+region = Rect2(48, 32, 64, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_planks"]
+atlas = ExtResource("2_walls")
+region = Rect2(48, 16, 32, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_planks_half"]
+atlas = ExtResource("2_walls")
+region = Rect2(48, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_window"]
+atlas = ExtResource("2_walls")
+region = Rect2(48, 32, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_door"]
+atlas = ExtResource("3_doors")
+region = Rect2(0, 16, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(64, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_door"]
+size = Vector2(18, 14)
+
+[node name="HouseExterior" type="StaticBody2D"]
+
+[node name="Building" type="Node2D" parent="."]
+modulate = Color(0.74, 0.68, 0.64, 1)
+
+[node name="WallTopLeft" type="Sprite2D" parent="Building"]
+position = Vector2(-16, -24)
+texture = SubResource("AtlasTexture_planks")
+
+[node name="WallTopRight" type="Sprite2D" parent="Building"]
+position = Vector2(16, -24)
+texture = SubResource("AtlasTexture_planks")
+
+[node name="Window" type="Sprite2D" parent="Building"]
+position = Vector2(-24, -8)
+texture = SubResource("AtlasTexture_window")
+
+[node name="WallBottomLeft" type="Sprite2D" parent="Building"]
+position = Vector2(-8, -8)
+texture = SubResource("AtlasTexture_planks_half")
+
+[node name="Door" type="Sprite2D" parent="Building"]
+modulate = Color(0.75, 0.7, 0.7, 1)
+position = Vector2(8, -8)
+texture = SubResource("AtlasTexture_door")
+
+[node name="WallBottomRight" type="Sprite2D" parent="Building"]
+position = Vector2(24, -8)
+texture = SubResource("AtlasTexture_planks_half")
+
+[node name="Roof" type="Sprite2D" parent="Building"]
+position = Vector2(0, -56)
+texture = SubResource("AtlasTexture_roof")
+
+[node name="MissingShingles1" type="ColorRect" parent="Building"]
+offset_left = -19.0
+offset_top = -67.0
+offset_right = -12.0
+offset_bottom = -63.0
+mouse_filter = 2
+color = Color(0.36, 0.25, 0.2, 1)
+
+[node name="MissingShingles2" type="ColorRect" parent="Building"]
+offset_left = 9.0
+offset_top = -48.0
+offset_right = 16.0
+offset_bottom = -45.0
+mouse_filter = 2
+color = Color(0.36, 0.25, 0.2, 1)
+
+[node name="MissingShingles3" type="ColorRect" parent="Building"]
+offset_left = 20.0
+offset_top = -73.0
+offset_right = 25.0
+offset_bottom = -70.0
+mouse_filter = 2
+color = Color(0.36, 0.25, 0.2, 1)
+
+[node name="DarkWindow" type="ColorRect" parent="Building"]
+offset_left = -29.0
+offset_top = -12.0
+offset_right = -19.0
+offset_bottom = -6.0
+mouse_filter = 2
+color = Color(0.08, 0.06, 0.08, 1)
+
+[node name="Board1" type="Line2D" parent="Building"]
+points = PackedVector2Array(-31, -13, -17, -5)
+width = 2.0
+default_color = Color(0.45, 0.3, 0.2, 1)
+
+[node name="Board2" type="Line2D" parent="Building"]
+points = PackedVector2Array(-31, -5, -17, -13)
+width = 2.0
+default_color = Color(0.4, 0.27, 0.18, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -30)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="DoorArea" type="Area2D" parent="."]
+position = Vector2(8, 5)
+script = ExtResource("4_interact")
+prompt = "E: Go inside"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DoorArea"]
+shape = SubResource("RectangleShape2D_door")

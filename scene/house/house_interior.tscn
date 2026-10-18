@@ -1,0 +1,127 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" uid="uid://cpwdgsqkqw6e6" path="res://assets/Tilesets/Wooden_House_Walls_Tilset.png" id="1_walls"]
+[ext_resource type="Texture2D" uid="uid://dijiwy2c7aggw" path="res://assets/Objects/Basic_Furniture.png" id="2_furniture"]
+[ext_resource type="Texture2D" uid="uid://ci67nfur0u0xu" path="res://assets/Tilesets/Doors.png" id="3_doors"]
+[ext_resource type="PackedScene" path="res://scene/objects/bed.tscn" id="4_bed"]
+[ext_resource type="PackedScene" path="res://scene/objects/phone.tscn" id="5_phone"]
+[ext_resource type="Script" path="res://scripts/interact_area.gd" id="6_interact"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_clock"]
+atlas = ExtResource("2_furniture")
+region = Rect2(80, 48, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rug"]
+atlas = ExtResource("2_furniture")
+region = Rect2(48, 80, 32, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_door"]
+atlas = ExtResource("3_doors")
+region = Rect2(0, 16, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_top"]
+size = Vector2(160, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bottom"]
+size = Vector2(160, 18)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_side"]
+size = Vector2(6, 112)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
+size = Vector2(24, 10)
+
+[node name="HouseInterior" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Shell" type="NinePatchRect" parent="."]
+z_index = -1
+modulate = Color(0.68, 0.62, 0.6, 1)
+offset_right = 160.0
+offset_bottom = 112.0
+mouse_filter = 2
+texture = ExtResource("1_walls")
+region_rect = Rect2(12, 0, 24, 48)
+patch_margin_left = 4
+patch_margin_top = 16
+patch_margin_right = 4
+patch_margin_bottom = 16
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
+[node name="Crack1" type="Line2D" parent="."]
+z_index = -1
+points = PackedVector2Array(34, 4, 37, 9, 35, 13)
+width = 1.0
+default_color = Color(0.15, 0.1, 0.1, 0.9)
+
+[node name="Crack2" type="Line2D" parent="."]
+z_index = -1
+points = PackedVector2Array(110, 40, 116, 44, 114, 50, 120, 53)
+width = 1.0
+default_color = Color(0.2, 0.14, 0.12, 0.7)
+
+[node name="Crack3" type="Line2D" parent="."]
+z_index = -1
+points = PackedVector2Array(64, 70, 70, 72, 73, 78)
+width = 1.0
+default_color = Color(0.2, 0.14, 0.12, 0.6)
+
+[node name="Clock" type="Sprite2D" parent="."]
+z_index = -1
+modulate = Color(0.7, 0.66, 0.62, 1)
+position = Vector2(72, 9)
+texture = SubResource("AtlasTexture_clock")
+
+[node name="Rug" type="Sprite2D" parent="."]
+z_index = -1
+modulate = Color(0.55, 0.55, 0.5, 1)
+position = Vector2(84, 66)
+texture = SubResource("AtlasTexture_rug")
+
+[node name="ExitDoor" type="Sprite2D" parent="."]
+z_index = -1
+modulate = Color(0.6, 0.55, 0.55, 1)
+position = Vector2(80, 104)
+texture = SubResource("AtlasTexture_door")
+
+[node name="Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Bed" parent="Objects" instance=ExtResource("4_bed")]
+position = Vector2(20, 52)
+
+[node name="Phone" parent="Objects" instance=ExtResource("5_phone")]
+position = Vector2(136, 36)
+
+[node name="Walls" type="StaticBody2D" parent="."]
+
+[node name="Top" type="CollisionShape2D" parent="Walls"]
+position = Vector2(80, 10)
+shape = SubResource("RectangleShape2D_top")
+
+[node name="Bottom" type="CollisionShape2D" parent="Walls"]
+position = Vector2(80, 103)
+shape = SubResource("RectangleShape2D_bottom")
+
+[node name="Left" type="CollisionShape2D" parent="Walls"]
+position = Vector2(3, 56)
+shape = SubResource("RectangleShape2D_side")
+
+[node name="Right" type="CollisionShape2D" parent="Walls"]
+position = Vector2(157, 56)
+shape = SubResource("RectangleShape2D_side")
+
+[node name="ExitArea" type="Area2D" parent="."]
+position = Vector2(80, 90)
+script = ExtResource("6_interact")
+prompt = "E: Go outside"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitArea"]
+shape = SubResource("RectangleShape2D_exit")
+
+[node name="InsideSpawn" type="Marker2D" parent="."]
+position = Vector2(80, 84)
+
+[node name="WakeSpawn" type="Marker2D" parent="."]
+position = Vector2(36, 50)

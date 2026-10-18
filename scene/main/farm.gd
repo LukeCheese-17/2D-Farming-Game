@@ -74,6 +74,20 @@ func can_harvest(cell: Vector2i) -> bool:
 	return _crops.has(cell) and _crops[cell].is_ripe()
 
 
+## Open water (no grass on top) that the player can fish in.
+func is_fishable(cell: Vector2i) -> bool:
+	return water_layer.get_cell_source_id(cell) != -1 and grass_layer.get_cell_source_id(cell) == -1
+
+
+## An animal standing on the cell that has something to collect, or null.
+func get_animal_with_product(cell: Vector2i) -> Animal:
+	var center := cell_to_world(cell)
+	for animal: Animal in get_tree().get_nodes_in_group("animals"):
+		if animal.has_product and animal.global_position.distance_to(center) < 14.0:
+			return animal
+	return null
+
+
 func can_use_tool(tool: Tools.Type, cell: Vector2i) -> bool:
 	match tool:
 		Tools.Type.HOE:
@@ -81,13 +95,15 @@ func can_use_tool(tool: Tools.Type, cell: Vector2i) -> bool:
 		Tools.Type.WATERING_CAN:
 			return can_water(cell)
 		Tools.Type.SEEDS:
-			return can_plant(cell) and GameState.get_item_count(GameState.get_selected_crop().seed_item) > 0
+			return can_plant(cell) and GameState.get_item_count(GameState.get_selected_crop().seed) > 0
+		Tools.Type.FISHING_ROD:
+			return is_fishable(cell)
 		Tools.Type.HAND:
-			return can_harvest(cell)
+			return can_harvest(cell) or get_animal_with_product(cell) != null
 	return false
 
 
-## Performs the tool's action, or posts a message explaining why it can't.
+## Performs the tool's action on the cell, if it can be done there. Fishing is handled by the player.
 func use_tool(tool: Tools.Type, cell: Vector2i) -> void:
 	match tool:
 		Tools.Type.HOE:
@@ -114,7 +130,7 @@ func _water(cell: Vector2i) -> void:
 
 
 func _plant(cell: Vector2i, crop_data: CropData) -> void:
-	if not can_plant(cell) or not GameState.remove_item(crop_data.seed_item):
+	if not can_plant(cell) or not GameState.remove_item(crop_data.seed):
 		return
 	var crop: Crop = CROP_SCENE.instantiate()
 	crop.setup(crop_data)
@@ -124,13 +140,17 @@ func _plant(cell: Vector2i, crop_data: CropData) -> void:
 
 
 func _harvest(cell: Vector2i) -> void:
+	var animal := get_animal_with_product(cell)
+	if animal:
+		animal.collect()
+		return
 	var crop: Crop = _crops.get(cell)
 	if crop == null:
 		return
 	if not crop.is_ripe():
 		GameState.post_message("Not ripe yet")
 		return
-	GameState.add_item(crop.data.produce_item, crop.data.harvest_amount)
+	GameState.add_item(crop.data.produce, crop.data.harvest_amount)
 	GameState.post_message("+%d %s" % [crop.data.harvest_amount, crop.data.display_name])
 	_crops.erase(cell)
 	crop.queue_free()

@@ -3,6 +3,10 @@
 [ext_resource type="Script" path="res://scene/player/player.gd" id="0_script"]
 [ext_resource type="Texture2D" uid="uid://b5q2rjb2t2hum" path="res://assets/Characters/Basic Charakter Actions.png" id="1_actions"]
 [ext_resource type="Texture2D" uid="uid://bvsdm2oj6bt6c" path="res://assets/Characters/Basic Charakter Spritesheet.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/Generated/bobber.png" id="3_bobber"]
+[ext_resource type="AudioStream" path="res://assets/Generated/step.wav" id="4_step"]
+[ext_resource type="AudioStream" path="res://assets/Generated/bite.wav" id="5_bite"]
+[ext_resource type="AudioStream" path="res://assets/Generated/splash.wav" id="6_splash"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3"]
 atlas = ExtResource("1_actions")
@@ -348,3 +352,30 @@ position = Vector2(0, -2)
 shape = SubResource("RectangleShape2D_feet")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(2, 2)
+
+[node name="Bobber" type="Sprite2D" parent="."]
+visible = false
+top_level = true
+z_index = 1
+texture = ExtResource("3_bobber")
+offset = Vector2(0, -1)
+
+[node name="FishingLine" type="Line2D" parent="."]
+visible = false
+top_level = true
+z_index = 1
+width = 1.0
+default_color = Color(0.85, 0.85, 0.8, 0.7)
+
+[node name="StepSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_step")
+volume_db = -16.0
+
+[node name="BiteSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_bite")
+volume_db = -6.0
+
+[node name="SplashSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_splash")
+volume_db = -8.0

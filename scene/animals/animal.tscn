@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scene/animals/animal.gd" id="1_animal"]
+
+[node name="Animal" type="Node2D"]
+script = ExtResource("1_animal")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+modulate = Color(0.85, 0.82, 0.8, 1)
+
+[node name="ProductBubble" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.85)
+z_index = 1

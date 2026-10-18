@@ -1,13 +1,23 @@
 [gd_scene format=4]
 
+[ext_resource type="Script" path="res://scene/main/main.gd" id="0_main"]
 [ext_resource type="TileSet" uid="uid://b5mmmmeduschn" path="res://TileSets/game_tile_set.tres" id="1_tileset"]
 [ext_resource type="Script" path="res://scene/main/farm.gd" id="2_farm"]
 [ext_resource type="Script" path="res://scene/main/tile_highlight.gd" id="3_highlight"]
 [ext_resource type="PackedScene" uid="uid://8brhp10f0333" path="res://scene/player/player.tscn" id="4_player"]
-[ext_resource type="PackedScene" path="res://scene/objects/bed.tscn" id="5_bed"]
-[ext_resource type="PackedScene" path="res://scene/ui/hud.tscn" id="6_hud"]
+[ext_resource type="PackedScene" path="res://scene/house/house_exterior.tscn" id="5_exterior"]
+[ext_resource type="PackedScene" path="res://scene/house/house_interior.tscn" id="6_interior"]
+[ext_resource type="PackedScene" path="res://scene/objects/shipping_box.tscn" id="7_box"]
+[ext_resource type="PackedScene" path="res://scene/animals/animal.tscn" id="8_animal"]
+[ext_resource type="Resource" path="res://data/animals/chicken.tres" id="9_chicken"]
+[ext_resource type="Resource" path="res://data/animals/cow.tres" id="10_cow"]
+[ext_resource type="PackedScene" path="res://scene/atmosphere/watcher.tscn" id="11_watcher"]
+[ext_resource type="PackedScene" path="res://scene/atmosphere/screen_mood.tscn" id="12_mood"]
+[ext_resource type="PackedScene" path="res://scene/ui/hud.tscn" id="13_hud"]
+[ext_resource type="AudioStream" path="res://assets/Generated/door_creak.wav" id="14_door"]
 
 [node name="Main" type="Node2D"]
+script = ExtResource("0_main")
 
 [node name="Ground" type="Node2D" parent="."]
 
@@ -35,19 +45,50 @@ y_sort_enabled = true
 tile_map_data = PackedByteArray("AAAVAAkABAADAAAAAAAWAAoABAAFAAAAAAAXAAoABAAGAAAAAAAYAAoABAAHAAAAAAAZAAoABAAIAAAAAAAVAAsABAAFAAEAAAAWAAsABAAGAAEAAAAXAAsABAAHAAEAAAAYAAsABAAIAAEAAAAZAAsABAAFAAMAAAAVAAwABAADAAIAAAAWAAwABAAEAAIAAAAXAAwABAAFAAIAAAAYAAwABAAGAAIAAAAZAAwABAAHAAIAAAAVAA0ABAAIAAIAAAAYAA0ABAAGAAMAAAAZAA0ABAAHAAMAAAAWAA0ABAAFAAQAAAAXAA0ABAAGAAQAAAAYAA4ABAAHAAQAAAAZAA4ABAAIAAQAAAA=")
 tile_set = ExtResource("1_tileset")
 
+[node name="Fences" type="TileMapLayer" parent="Objects"]
+y_sort_enabled = true
+modulate = Color(0.8, 0.75, 0.72, 1)
+tile_map_data = PackedByteArray("AAAaAAkABQABAAAAAAAbAAkABQACAAMAAAAcAAkABQACAAMAAAAdAAkABQACAAMAAAAeAAkABQACAAMAAAAfAAkABQACAAMAAAAgAAkABQACAAMAAAAhAAkABQADAAAAAAAaAAoABQAAAAEAAAAhAAoABQAAAAEAAAAaAAsABQAAAAEAAAAhAAsABQAAAAEAAAAaAAwABQAAAAEAAAAhAAwABQAAAAEAAAAaAA0ABQAAAAEAAAAhAA0ABQAAAAEAAAAaAA4ABQABAAIAAAAbAA4ABQACAAMAAAAcAA4ABQADAAMAAAAeAA4ABQABAAMAAAAfAA4ABQACAAMAAAAgAA4ABQACAAMAAAAhAA4ABQADAAIAAAA=")
+tile_set = ExtResource("1_tileset")
+
 [node name="Crops" type="Node2D" parent="Objects"]
 y_sort_enabled = true
 
-[node name="Bed" parent="Objects" instance=ExtResource("5_bed")]
-position = Vector2(120, 144)
+[node name="HouseExterior" parent="Objects" instance=ExtResource("5_exterior")]
+position = Vector2(144, 144)
+
+[node name="ShippingBox" parent="Objects" instance=ExtResource("7_box")]
+position = Vector2(186, 148)
+
+[node name="Chicken1" parent="Objects" instance=ExtResource("8_animal")]
+position = Vector2(452, 182)
+data = ExtResource("9_chicken")
+wander_rect = Rect2(438, 168, 84, 50)
+
+[node name="Chicken2" parent="Objects" instance=ExtResource("8_animal")]
+position = Vector2(500, 204)
+data = ExtResource("9_chicken")
+wander_rect = Rect2(438, 168, 84, 50)
+
+[node name="Cow" parent="Objects" instance=ExtResource("8_animal")]
+position = Vector2(480, 176)
+data = ExtResource("10_cow")
+wander_rect = Rect2(438, 168, 84, 50)
+
+[node name="HouseInterior" parent="Objects" instance=ExtResource("6_interior")]
+position = Vector2(960, 32)
 
 [node name="Player" parent="Objects" node_paths=PackedStringArray("farm", "tile_highlight") instance=ExtResource("4_player")]
-position = Vector2(232, 170)
+position = Vector2(1040, 118)
 farm = NodePath("../../Farm")
 tile_highlight = NodePath("../../TileHighlight")
 
 [node name="TileHighlight" type="Node2D" parent="."]
 script = ExtResource("3_highlight")
+
+[node name="Watcher" parent="." node_paths=PackedStringArray("player", "farm") instance=ExtResource("11_watcher")]
+player = NodePath("../Objects/Player")
+farm = NodePath("../Farm")
 
 [node name="Farm" type="Node" parent="." node_paths=PackedStringArray("water_layer", "grass_layer", "tilled_layer", "wet_layer", "nature_layer", "crops_parent")]
 script = ExtResource("2_farm")
@@ -58,4 +99,11 @@ wet_layer = NodePath("../Ground/WetSoil")
 nature_layer = NodePath("../Objects/Nature")
 crops_parent = NodePath("../Objects/Crops")
 
-[node name="HUD" parent="." instance=ExtResource("6_hud")]
+[node name="DoorSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("14_door")
+volume_db = -10.0
+
+[node name="ScreenMood" parent="." node_paths=PackedStringArray("player") instance=ExtResource("12_mood")]
+player = NodePath("../Objects/Player")
+
+[node name="HUD" parent="." instance=ExtResource("13_hud")]

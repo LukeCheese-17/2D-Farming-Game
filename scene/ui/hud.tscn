@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scene/ui/hud.gd" id="1_hud"]
 
 [node name="HUD" type="CanvasLayer"]
+layer = 3
 script = ExtResource("1_hud")
 
 [node name="Root" type="Control" parent="."]
@@ -14,13 +15,25 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="DayLabel" type="Label" parent="Root"]
+[node name="Status" type="VBoxContainer" parent="Root"]
 layout_mode = 0
 offset_left = 6.0
 offset_top = 4.0
-offset_right = 80.0
-offset_bottom = 18.0
-text = "Day 1"
+offset_right = 260.0
+offset_bottom = 50.0
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="ClockLabel" type="Label" parent="Root/Status"]
+layout_mode = 2
+text = "Day 1   06:00"
+
+[node name="MoneyLabel" type="Label" parent="Root/Status"]
+layout_mode = 2
+text = "50g"
+
+[node name="JobLabel" type="Label" parent="Root/Status"]
+layout_mode = 2
 
 [node name="Inventory" type="VBoxContainer" parent="Root"]
 layout_mode = 1
@@ -30,8 +43,9 @@ anchor_right = 1.0
 offset_left = -70.0
 offset_top = 4.0
 offset_right = -6.0
-offset_bottom = 80.0
+offset_bottom = 120.0
 grow_horizontal = 0
+mouse_filter = 2
 theme_override_constants/separation = 0
 
 [node name="MessageLabel" type="Label" parent="Root"]
@@ -40,9 +54,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -150.0
-offset_top = 24.0
+offset_top = 36.0
 offset_right = 150.0
-offset_bottom = 38.0
+offset_bottom = 50.0
 grow_horizontal = 2
 horizontal_alignment = 1
 
@@ -83,12 +97,41 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -50.0
+offset_left = -60.0
 offset_top = -26.0
-offset_right = 50.0
+offset_right = 60.0
 offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 1
 
+[node name="DialogueBox" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -70.0
+offset_right = 200.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="Root/DialogueBox"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Text" type="Label" parent="Root/DialogueBox/VBox"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+size_flags_vertical = 3
+autowrap_mode = 3
+
+[node name="Choices" type="Label" parent="Root/DialogueBox/VBox"]
+layout_mode = 2
+horizontal_alignment = 2

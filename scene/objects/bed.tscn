@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scene/objects/bed.gd" id="1_bed"]
 [ext_resource type="Texture2D" uid="uid://dijiwy2c7aggw" path="res://assets/Objects/Basic_Furniture.png" id="2_furniture"]
+[ext_resource type="Script" path="res://scripts/interact_area.gd" id="3_interact"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bed"]
 atlas = ExtResource("2_furniture")
@@ -17,6 +18,7 @@ size = Vector2(32, 38)
 script = ExtResource("1_bed")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.78, 0.74, 0.7, 1)
 position = Vector2(0, -11)
 texture = SubResource("AtlasTexture_bed")
 
@@ -25,6 +27,8 @@ position = Vector2(0, -9)
 shape = SubResource("RectangleShape2D_body")
 
 [node name="InteractArea" type="Area2D" parent="."]
+script = ExtResource("3_interact")
+prompt = "E: Sleep"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
 position = Vector2(0, -11)
