@@ -174,10 +174,11 @@ func is_land(cell: Vector2i) -> bool:
 	return grass_layer.get_cell_source_id(cell) != -1
 
 
-## Fences and gates go on open grass or paths, not on soil, plants or animals.
+## Fences and gates go on open grass or paths, not on soil, plants, tree trunks or animals.
 func can_build(cell: Vector2i) -> bool:
 	return is_land(cell) and not pens.is_fence(cell) and not is_tilled(cell) \
-		and nature_layer.get_cell_source_id(cell) == -1 and not _has_body_at(cell) and _animal_at(cell) == null
+		and nature_layer.get_cell_source_id(cell) == -1 and _trunk_of(cell) == Vector2i(-1, -1) \
+		and not _has_body_at(cell) and get_animal_at(cell, 12.0) == null
 
 
 func can_release(cell: Vector2i) -> bool:
@@ -225,9 +226,14 @@ func _choppable(cell: Vector2i) -> Vector2i:
 
 ## An animal standing on the cell that has something to collect, or null.
 func get_animal_with_product(cell: Vector2i) -> Animal:
+	return get_animal_at(cell, 14.0, true)
+
+
+## An animal within reach of the cell's center, or null.
+func get_animal_at(cell: Vector2i, reach: float, with_product := false) -> Animal:
 	var center := cell_to_world(cell)
 	for animal: Animal in get_tree().get_nodes_in_group("animals"):
-		if animal.has_product and animal.global_position.distance_to(center) < 14.0:
+		if (animal.has_product or not with_product) and animal.global_position.distance_to(center) < reach:
 			return animal
 	return null
 
@@ -448,14 +454,6 @@ func refresh_pens() -> void:
 		var cells: Array[Vector2i] = []
 		cells.assign(known[cell])
 		animal.set_pen(self, cells)
-
-
-func _animal_at(cell: Vector2i) -> Animal:
-	var center := cell_to_world(cell)
-	for animal: Animal in get_tree().get_nodes_in_group("animals"):
-		if animal.global_position.distance_to(center) < 12.0:
-			return animal
-	return null
 
 
 ## Animals in a pen with an open gate (or a gap in the fence) may be gone by morning.

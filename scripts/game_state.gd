@@ -448,11 +448,11 @@ func sleep() -> Array[String]:
 	_supply_order = waiting
 	if not waiting.is_empty():
 		report.append("Your bag is full. The rest of the package is still waiting by the door.")
+	night_passed.emit(report)
 	if food < LOW_NEED:
 		report.append("Your stomach hurts. You need to eat something.")
 	if water < LOW_NEED:
 		report.append("Your throat is dry. You need water.")
-	night_passed.emit(report)
 	day_changed.emit(day)
 	time_changed.emit(minutes)
 	return report
