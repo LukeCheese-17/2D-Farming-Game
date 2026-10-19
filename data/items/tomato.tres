@@ -15,3 +15,4 @@ icon = SubResource("AtlasTexture_1")
 sell_price = 35
 food = 10
 water = 8
+health = 4

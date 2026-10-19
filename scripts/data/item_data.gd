@@ -24,6 +24,8 @@ extends Resource
 @export var food := 0
 ## How much eating one refills the water meter.
 @export var water := 0
+## How much health eating one gives back.
+@export var health := 0
 
 
 func is_edible() -> bool:

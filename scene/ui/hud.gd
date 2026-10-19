@@ -261,7 +261,7 @@ func _on_backpack_slot_hovered(index: int) -> void:
 	if stack.item.sell_price > 0:
 		parts.append("sells for %dg each" % stack.item.sell_price)
 	if stack.item.is_edible():
-		parts.append("food +%d, water +%d" % [stack.item.food, stack.item.water])
+		parts.append("food +%d, water +%d, health +%d" % [stack.item.food, stack.item.water, stack.item.health])
 	_item_info.text = " - ".join(parts)
 
 

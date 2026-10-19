@@ -15,6 +15,7 @@ const ROOM_SIZE := Vector2(160, 112)
 
 
 func _ready() -> void:
+	GameState.clock_running = true
 	_door.interacted.connect(enter_house)
 	_interior.get_node("ExitArea").interacted.connect(leave_house)
 	_interior.get_node("Objects/Bed").sleep_requested.connect(sleep)

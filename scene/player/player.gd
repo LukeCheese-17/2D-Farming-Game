@@ -179,12 +179,13 @@ func _update_prompt() -> void:
 
 
 ## What happens when the player presses the use key, in order: hit an enemy in
-## reach, cast the rod, use the item on the tile, eat it, or drink from water.
+## reach, cast the rod, use the item on the tile (a sword can still harvest and
+## collect), swing a sword at nothing, eat it, or drink from water.
 func use_held_item() -> void:
 	var item := _inventory.get_selected_item()
 	var cell := get_target_cell()
 	var is_weapon := item != null and item.tool == Tools.Type.SWORD
-	if is_weapon or not _enemies_in_reach().is_empty():
+	if not _enemies_in_reach().is_empty() or (is_weapon and not area.can_use(item, cell)):
 		_attack(item)
 		return
 	if item and item.tool == Tools.Type.FISHING_ROD:

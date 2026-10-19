@@ -26,6 +26,8 @@ const BUSH := Vector2i(1, 3)
 const SMALL_ROCKS: Array[Vector2i] = [Vector2i(7, 1), Vector2i(6, 4)]
 const BIG_ROCKS: Array[Vector2i] = [Vector2i(8, 1), Vector2i(5, 4)]
 const MUSHROOMS: Array[Vector2i] = [Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 0), Vector2i(8, 0)]
+## The red ones; the purple ones are dusk caps.
+const RED_MUSHROOMS: Array[Vector2i] = [Vector2i(5, 0), Vector2i(6, 0)]
 ## Weeds and flowers: cleared with the hoe or by hand.
 const DECOR: Array[Vector2i] = [Vector2i(5, 1), Vector2i(6, 1), Vector2i(6, 2), Vector2i(7, 2), Vector2i(5, 3), Vector2i(6, 3), Vector2i(7, 3)]
 
@@ -45,6 +47,7 @@ const STONE := preload("res://data/items/stone.tres")
 const BERRIES := preload("res://data/items/berries.tres")
 const APPLE := preload("res://data/items/apple.tres")
 const DUSK_CAP := preload("res://data/items/dusk_cap.tres")
+const RED_CAP := preload("res://data/items/red_cap.tres")
 
 @export var water_layer: TileMapLayer
 @export var grass_layer: TileMapLayer
@@ -263,7 +266,7 @@ func _collect(cell: Vector2i) -> void:
 			_regrow[cell] = [APPLE_TREE, GameState.day + APPLE_REGROW_DAYS]
 		return
 	if tile in MUSHROOMS:
-		if _give(DUSK_CAP, 1):
+		if _give(RED_CAP if tile in RED_MUSHROOMS else DUSK_CAP, 1):
 			nature_layer.erase_cell(cell)
 		return
 	var crop: Crop = _crops.get(cell)

@@ -12,6 +12,8 @@ var _eyes_time := 3.0
 
 
 func _ready() -> void:
+	# Nothing ticks behind the title screen.
+	GameState.clock_running = false
 	theme = UITheme.make()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var back := ColorRect.new()

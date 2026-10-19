@@ -11,3 +11,4 @@ icon = ExtResource("1")
 sell_price = 45
 food = 12
 water = 2
+health = 4

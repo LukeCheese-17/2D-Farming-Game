@@ -251,12 +251,14 @@ func use_needs(food_amount: float, water_amount: float) -> void:
 func eat(item: ItemData) -> bool:
 	if item == null or not item.is_edible():
 		return false
-	if (item.food == 0 or food >= MAX_NEED) and (item.water == 0 or water >= MAX_NEED):
+	var useless := (item.food == 0 or food >= MAX_NEED) and (item.water == 0 or water >= MAX_NEED)
+	if useless and (item.health == 0 or health >= MAX_HEALTH):
 		return false
 	if not inventory.remove(item):
 		return false
 	food = minf(food + item.food, MAX_NEED)
 	water = minf(water + item.water, MAX_NEED)
+	health = mini(health + item.health, MAX_HEALTH)
 	needs_changed.emit()
 	return true
 

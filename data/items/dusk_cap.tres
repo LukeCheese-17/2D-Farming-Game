@@ -14,3 +14,4 @@ display_name = "Dusk cap"
 icon = SubResource("AtlasTexture_1")
 sell_price = 14
 food = 6
+health = 2

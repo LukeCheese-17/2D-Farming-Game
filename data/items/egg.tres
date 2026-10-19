@@ -14,3 +14,4 @@ display_name = "Egg"
 icon = SubResource("AtlasTexture_1")
 sell_price = 30
 food = 10
+health = 5

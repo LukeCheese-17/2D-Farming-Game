@@ -12,3 +12,4 @@ sell_price = 20
 buy_price = 60
 food = 50
 water = 15
+health = 25
