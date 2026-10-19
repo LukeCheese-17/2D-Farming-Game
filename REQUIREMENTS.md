@@ -78,11 +78,12 @@ The core loops are:
 
 ## 8. Atmosphere — horror, no monster
 
-The horror comes from mood and suggestion only. Nothing ever attacks, chases or appears.
+On the surface (farm, village, woods) the horror comes from mood and suggestion only. Nothing ever attacks, chases or appears there.
+The mine (MIN) is the one exception: it has enemies.
 
 | ID | Requirement |
 |----|-------------|
-| ATM-1 | **There is no monster.** No creature, enemy or figure is ever shown, and there is no combat, damage or death. |
+| ATM-1 | **There is no monster on the surface.** No creature, enemy or figure is ever shown above ground, and there is no combat there. Enemies exist only in the mine (MIN-3). |
 | ATM-2 | The game constantly suggests the player is being watched, using small, deniable cues. Examples: something just at the edge of the screen that is gone when you look, eyes in the dark tree line, footsteps that stop when you stop, objects moved slightly overnight, animals all turning to stare at the same spot. |
 | ATM-3 | Cues are subtle and rare enough to stay unsettling, not jump-scares. They should be easy to miss. |
 | ATM-4 | The visual mood is muted and lonely (for example: desaturated colours, a dark vignette, fog or dimming toward the edges of the map), while keeping the cozy pixel-art style readable. |
@@ -107,6 +108,8 @@ The horror comes from mood and suggestion only. Nothing ever attacks, chases or 
 | PHN-5 | The current task (what, how many, progress, deadline, reward) is shown on screen. |
 | PHN-6 | When the task's items are shipped (see SHP) before the deadline, the reward money is paid out. |
 | PHN-7 | The caller's lines stay short and slightly off, adding to the uneasy mood (ATM-2), without ever revealing who or what he is. |
+| PHN-8 | Phone calls only start from 06:00 (the start of the day). |
+| PHN-9 | The day after a job is completed, the phone rings with a new job. |
 
 ## 11. Money and the shipping box
 
@@ -126,6 +129,7 @@ The horror comes from mood and suggestion only. Nothing ever attacks, chases or 
 | FSH-2 | After casting, there is a wait, then a bite starts a timing-ring minigame: a needle sweeps around a dial and the player presses Space while it is in the lit zone. Enough hits in a row land the fish; a miss, or waiting too long, lets it go. Harder fish have a smaller zone, a faster needle and need more hits. |
 | FSH-3 | A caught fish goes into the inventory. There are at least two fish types, defined as data. |
 | FSH-4 | Fish can be shipped and sold, and can be asked for in phone tasks. |
+| FSH-5 | There is a wide variety of fish (at least 10), each with its own difficulty, price and where/when it can be caught (e.g. pond vs river, day vs night). |
 
 ## 13. Animals
 
@@ -147,6 +151,64 @@ The horror comes from mood and suggestion only. Nothing ever attacks, chases or 
 | TEC-5 | Input uses named actions in the Input Map (`move_up`, `move_down`, `move_left`, `move_right`, `use_tool`, `interact`, `hotbar_1`…`hotbar_10`, `hotbar_next`, `hotbar_previous`, `backpack`), not hard-coded keys. |
 | TEC-6 | Characters and objects y-sort so the player can walk behind trees and in front of them. |
 
+## 15. Map revamp
+
+| ID | Requirement |
+|----|-------------|
+| MAP-1 | The map is redesigned to be bigger and better: farm, woods, river/pond, the way to the mine and the abandoned village. |
+| MAP-2 | Areas are connected so the player can walk between them (or travel through map exits). |
+
+## 16. Food and water
+
+| ID | Requirement |
+|----|-------------|
+| NED-1 | The player has food and water meters, shown on screen, that go down over time. |
+| NED-2 | The player eats food items and drinks water to refill them. |
+| NED-3 | Low food or water has consequences (e.g. slower movement, fainting). |
+
+## 17. Tools: axe and pickaxe
+
+| ID | Requirement |
+|----|-------------|
+| TOL-1 | An axe cuts down trees, giving wood. |
+| TOL-2 | A pickaxe breaks rocks, giving stone (and ore in the mine). |
+| TOL-3 | Crops can be harvested and animal products collected while holding any tool, not only an empty hand. |
+
+## 18. The mine
+
+| ID | Requirement |
+|----|-------------|
+| MIN-1 | There is a mine with 5 floors, giving the player more to do during the day. |
+| MIN-2 | Each floor is a different biome with its own look, rocks and materials. |
+| MIN-3 | Each floor has its own terrifying enemies. The player can fight them and can be hurt. |
+| MIN-4 | Mine materials (stone, ores, etc.) are used by the blacksmith (VIL-3) and to rebuild the village. |
+
+## 19. The abandoned village
+
+| ID | Requirement |
+|----|-------------|
+| VIL-1 | There is an abandoned village that the player rebuilds by completing quests and handing in materials. Each rebuilt building opens a feature. |
+| VIL-2 | Blacksmith: makes better tools using materials from the mine. |
+| VIL-3 | Flower shop. |
+| VIL-4 | General store: a proper seed shop with a wider variety of seeds. |
+
+## 20. Quests
+
+| ID | Requirement |
+|----|-------------|
+| QST-1 | There are more quests (phone jobs and village quests), defined as data. |
+| QST-2 | A daily quest board offers new quests each day. |
+
+## 21. Menus, UI and saving
+
+| ID | Requirement |
+|----|-------------|
+| UI-1 | UI overhaul: a consistent, cleaner look for the HUD, hotbar, backpack, dialogue and menus. |
+| UI-2 | A home (title) screen with at least New Game, Continue and Quit. |
+| UI-3 | Pressing Esc pauses the game and opens a pause menu (Resume, Options, Save, Quit to home screen). |
+| UI-4 | The pause menu has options (e.g. volume, fullscreen, controls). |
+| SAV-1 | The game can be saved and loaded (farm, inventory, money, day, animals, quests, village progress). |
+
 ## Open questions
 
 Things the vision doesn't settle yet. Each has a **provisional answer** chosen so the game could be built
@@ -165,7 +227,7 @@ Other choices made while building:
 
 ## Out of scope (for now)
 
-Saving/loading, seasons, crafting, and any visible NPCs (the caller is only a voice on the phone).
+Seasons and crafting. (Saving, mine enemies and the village are now in scope — sections 15-21.)
 
 ## Done when (full loop)
 
