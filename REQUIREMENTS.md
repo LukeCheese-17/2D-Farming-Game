@@ -224,6 +224,13 @@ Other choices made while building:
 - The camera is zoomed in 2x, so you only see the area around you (helps the "something is out there" feeling).
 - A day runs from 06:00; 10 in-game minutes pass every 7 seconds. Staying up until 02:00 makes you pass out and wake up in bed.
 - Some nights the phone rings and no one speaks (PHN-7 / ATM-2).
+- **Map:** one big connected surface map (farm in the middle, woods and pond north, river with two bridges east, village west, mine entrance south), painted by `tools/build_world.gd`. Only the farm can be tilled; grass outside it is "wild grass".
+- **Needs:** food and water drop every 10 minutes and overnight. Below 20 you walk slower; at 0 you faint and wake up the next morning. Eat by using a food item; drink by using the empty hand (or any non-tool) on water, or at the village well.
+- **Health:** only matters in the mine. Fainting there means waking up at home the next morning with 10% of your money gone (max 200g). Sleeping restores health.
+- **Mine:** five floors (Damp Tunnels, Root Hollow, Bone Gallery, Frozen Dark, Red Deep), dug out fresh each visit; a ladder down sits at the far end of each floor. The lift at the entrance goes to any floor already reached. A rusty sword waits on floor 1 the first time. Something waits at the bottom of floor 5.
+- **Village:** rebuilding a building costs materials + money and finishes overnight ("nobody heard any hammering"). General store = seeds and food; flower shop = flower seeds and bouquets; blacksmith = copper/iron/gold axes, pickaxes and swords (the new tool replaces the old one in its slot). A fourth house stays boarded up.
+- **Quest board:** three notes each morning from `data/quests`; take up to three, bring the items back to the board before the deadline. Nobody is ever seen pinning them.
+- **Saving:** autosaves every morning; the pause menu also saves. Continue on the title screen loads it.
 
 ## Out of scope (for now)
 

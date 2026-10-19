@@ -44,7 +44,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_eyes(delta)
 	_update_echo(delta)
-	if UI.is_blocking():
+	if UI.is_blocking() or player.in_mine:
 		return
 	_next_cue -= delta
 	if _next_cue > 0.0:
@@ -89,7 +89,7 @@ func _update_eyes(delta: float) -> void:
 	_eyes_time -= delta
 	var to_eyes := _eyes.global_position - player.global_position
 	var looking := to_eyes.normalized().dot(player.facing) > EYES_LOOK_DOT and _eyes_time < EYES_MAX_TIME - 1.0
-	if _eyes_time <= 0.0 or to_eyes.length() < EYES_VANISH_DISTANCE or looking or player.indoors:
+	if _eyes_time <= 0.0 or to_eyes.length() < EYES_VANISH_DISTANCE or looking or player.indoors or player.in_mine:
 		_eyes.hide()
 
 

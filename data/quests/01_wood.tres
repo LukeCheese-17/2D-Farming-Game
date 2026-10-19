@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/wood.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+item = ExtResource("1")
+amount = 10
+reward = 60
+days = 3
+note = "The fence by the well fell down again.\nLeave {amount} {item} here. {reward}g."

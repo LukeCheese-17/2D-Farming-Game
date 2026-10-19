@@ -1,11 +1,14 @@
 extends CanvasLayer
-## On-screen info: day and time, money, the current phone job, the hotbar and
-## backpack, prompts, messages, the dialogue box and the fishing minigame.
+## On-screen info: day and time, money, the phone job and board quests, the food,
+## water and health meters, the hotbar and backpack, prompts, messages, the
+## dialogue box, list menus (shops, the notice board) and the fishing minigame.
 
-const FONT_SIZE := 10
 const MESSAGE_TIME := 2.0
+const METER_SIZE := Vector2(46, 5)
+const MENU_WIDTH := 300.0
 
 @onready var _root: Control = $Root
+@onready var _status: VBoxContainer = $Root/Status
 @onready var _clock_label: Label = $Root/Status/ClockLabel
 @onready var _money_label: Label = $Root/Status/MoneyLabel
 @onready var _job_label: Label = $Root/Status/JobLabel
@@ -35,23 +38,48 @@ var _line_index := 0
 var _choice_index := 0
 var _opened_frame := -1
 
+var _quest_label := Label.new()
+var _meters: Dictionary[String, ColorRect] = {}
+var _menu := PanelContainer.new()
+var _menu_title := Label.new()
+var _menu_list := VBoxContainer.new()
+var _menu_footer := Label.new()
+var _menu_options: Array[String] = []
+var _menu_index := 0
+var _ui_move := AudioStreamPlayer.new()
+var _ui_select := AudioStreamPlayer.new()
+
 
 func _ready() -> void:
 	_inventory = GameState.inventory
-	_root.theme = _make_theme()
-	_dialogue_box.add_theme_stylebox_override("panel", _panel_style(0.85))
-	_backpack.add_theme_stylebox_override("panel", _panel_style(0.9))
+	_root.theme = UITheme.make()
+	_dialogue_box.add_theme_stylebox_override("panel", UITheme.panel(0.9))
+	_backpack.add_theme_stylebox_override("panel", UITheme.panel(0.92))
+	_build_status()
+	_build_meters()
+	_build_menu()
 	_build_slots()
+	_ui_move.stream = preload("res://assets/Generated/ui_move.wav")
+	_ui_select.stream = preload("res://assets/Generated/ui_select.wav")
+	for sound in [_ui_move, _ui_select]:
+		sound.volume_db = -12.0
+		add_child(sound)
 	GameState.time_changed.connect(func(_minutes: int) -> void: _refresh_clock())
 	GameState.day_changed.connect(func(_day: int) -> void: _refresh_clock())
+	GameState.day_changed.connect(func(_day: int) -> void: _refresh_quests())
 	GameState.money_changed.connect(func(_money: int) -> void: _refresh_money())
+	GameState.needs_changed.connect(_refresh_meters)
 	GameState.jobs.changed.connect(_refresh_job)
+	GameState.quests.changed.connect(_refresh_quests)
 	_inventory.changed.connect(_refresh_slots)
+	_inventory.changed.connect(_refresh_quests)
 	_inventory.selection_changed.connect(_refresh_slots)
 	UI.message_posted.connect(_show_message)
 	UI.prompt_changed.connect(func(text: String) -> void: _prompt_label.text = text)
 	UI.dialogue_started.connect(_on_dialogue_started)
 	UI.dialogue_finished.connect(_on_dialogue_finished)
+	UI.menu_started.connect(_on_menu_started)
+	UI.menu_finished.connect(_on_menu_finished)
 	UI.backpack_toggled.connect(_on_backpack_toggled)
 	UI.fishing_started.connect(_on_fishing_started)
 	_fishing_ring.finished.connect(UI.end_fishing)
@@ -60,9 +88,12 @@ func _ready() -> void:
 	_dialogue_box.hide()
 	_backpack.hide()
 	_held_icon.hide()
+	_menu.hide()
 	_refresh_clock()
 	_refresh_money()
 	_refresh_job()
+	_refresh_quests()
+	_refresh_meters()
 	_refresh_slots()
 
 
@@ -72,7 +103,9 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _dialogue_box.visible:
+	if _menu.visible:
+		_handle_menu_input(event)
+	elif _dialogue_box.visible:
 		_handle_dialogue_input(event)
 	elif _backpack.visible:
 		if event.is_action_pressed("backpack") or event.is_action_pressed("ui_cancel"):
@@ -83,24 +116,70 @@ func _unhandled_input(event: InputEvent) -> void:
 		UI.set_backpack_open(true)
 
 
-func _make_theme() -> Theme:
-	var theme := Theme.new()
-	theme.default_font_size = FONT_SIZE
-	theme.set_color("font_outline_color", "Label", Color.BLACK)
-	theme.set_constant("outline_size", "Label", 3)
-	return theme
-
-
-func _panel_style(alpha: float) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.04, 0.03, 0.05, alpha)
-	style.border_color = Color(0.5, 0.45, 0.45)
-	style.set_border_width_all(1)
-	style.set_content_margin_all(6)
-	return style
-
-
 # --- Status ---
+
+func _build_status() -> void:
+	var panel := PanelContainer.new()
+	panel.position = Vector2(4, 4)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", UITheme.panel(0.6))
+	_root.add_child(panel)
+	_root.move_child(panel, 0)
+	_status.reparent(panel)
+	_money_label.add_theme_color_override("font_color", UITheme.ACCENT)
+	for label: Label in [_job_label, _quest_label]:
+		label.add_theme_font_size_override("font_size", 8)
+		label.custom_minimum_size.x = 200
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.add_child(_quest_label)
+
+
+func _build_meters() -> void:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UITheme.panel(0.6))
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	panel.position = Vector2(-4 - 70, 4)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 2)
+	panel.add_child(list)
+	var meters := {"health": Color(0.75, 0.22, 0.24), "food": Color(0.82, 0.6, 0.32), "water": Color(0.4, 0.62, 0.88)}
+	for name: String in meters:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+		var icon := TextureRect.new()
+		icon.texture = load("res://assets/Generated/icon_%s.png" % name)
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		icon.custom_minimum_size = Vector2(9, 8)
+		row.add_child(icon)
+		var back := ColorRect.new()
+		back.color = Color(0.08, 0.06, 0.07)
+		back.custom_minimum_size = METER_SIZE
+		back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var fill := ColorRect.new()
+		fill.color = meters[name]
+		fill.size = METER_SIZE
+		back.add_child(fill)
+		row.add_child(back)
+		list.add_child(row)
+		_meters[name] = fill
+	_root.add_child(panel)
+	_root.move_child(panel, 1)
+
+
+func _refresh_meters() -> void:
+	_set_meter("health", float(GameState.health) / GameState.MAX_HEALTH)
+	_set_meter("food", GameState.food / GameState.MAX_NEED)
+	_set_meter("water", GameState.water / GameState.MAX_NEED)
+
+
+func _set_meter(name: String, share: float) -> void:
+	var fill := _meters[name]
+	fill.size.x = roundf(METER_SIZE.x * clampf(share, 0.0, 1.0))
+	# Low meters blink faintly.
+	fill.modulate.a = 0.55 if share < GameState.LOW_NEED / GameState.MAX_NEED else 1.0
+
 
 func _refresh_clock() -> void:
 	_clock_label.text = "Day %d   %s" % [GameState.day, GameState.get_time_text()]
@@ -114,9 +193,18 @@ func _refresh_job() -> void:
 	var board := GameState.jobs
 	_job_label.visible = board.active != null
 	if board.active:
-		_job_label.text = "Job: %d/%d %s by day %d (%dg)" % [
+		_job_label.text = "Phone: %d/%d %s by day %d (%dg)" % [
 			mini(board.progress, board.active.amount), board.active.amount,
 			board.active.item.display_name, board.deadline, board.active.reward]
+
+
+func _refresh_quests() -> void:
+	var lines: PackedStringArray = []
+	for a in GameState.quests.active:
+		lines.append("Board: %d/%d %s by day %d (%dg)" % [mini(_inventory.count(a.quest.item), a.quest.amount),
+			a.quest.amount, a.quest.item.display_name, a.deadline, a.quest.reward])
+	_quest_label.text = "\n".join(lines)
+	_quest_label.visible = not lines.is_empty()
 
 
 # --- Hotbar and backpack ---
@@ -168,10 +256,13 @@ func _on_backpack_slot_hovered(index: int) -> void:
 	var stack := _inventory.get_slot(index)
 	if stack == null:
 		_item_info.text = ""
-	elif stack.item.sell_price > 0:
-		_item_info.text = "%s x%d - sells for %dg each" % [stack.item.display_name, stack.count, stack.item.sell_price]
-	else:
-		_item_info.text = "%s x%d" % [stack.item.display_name, stack.count]
+		return
+	var parts: PackedStringArray = ["%s x%d" % [stack.item.display_name, stack.count]]
+	if stack.item.sell_price > 0:
+		parts.append("sells for %dg each" % stack.item.sell_price)
+	if stack.item.is_edible():
+		parts.append("food +%d, water +%d" % [stack.item.food, stack.item.water])
+	_item_info.text = " - ".join(parts)
 
 
 func _on_backpack_toggled(open: bool) -> void:
@@ -209,16 +300,19 @@ func _on_dialogue_started(lines: Array[String], choices: Array[String]) -> void:
 	_line_index = 0
 	_choice_index = 0
 	_opened_frame = Engine.get_process_frames()
-	_hotbar.hide()
-	_item_label.hide()
+	_set_hotbar_visible(false)
 	_dialogue_box.show()
 	_show_line()
 
 
 func _on_dialogue_finished(_choice: int) -> void:
 	_dialogue_box.hide()
-	_hotbar.show()
-	_item_label.show()
+	_set_hotbar_visible(not _menu.visible)
+
+
+func _set_hotbar_visible(shown: bool) -> void:
+	_hotbar.visible = shown
+	_item_label.visible = shown
 
 
 func _handle_dialogue_input(event: InputEvent) -> void:
@@ -228,10 +322,12 @@ func _handle_dialogue_input(event: InputEvent) -> void:
 	var choosing := _is_choosing()
 	if choosing and (event.is_action_pressed("move_left") or event.is_action_pressed("move_up")):
 		_choice_index = wrapi(_choice_index - 1, 0, _choices.size())
+		_ui_move.play()
 		_show_line()
 		get_viewport().set_input_as_handled()
 	elif choosing and (event.is_action_pressed("move_right") or event.is_action_pressed("move_down")):
 		_choice_index = wrapi(_choice_index + 1, 0, _choices.size())
+		_ui_move.play()
 		_show_line()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") or event.is_action_pressed("use_tool"):
@@ -258,3 +354,83 @@ func _show_line() -> void:
 	else:
 		_dialogue_choices.text = "E"
 		_dialogue_choices.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+
+
+# --- List menus ---
+
+func _build_menu() -> void:
+	_menu.add_theme_stylebox_override("panel", UITheme.panel(0.94))
+	_menu.set_anchors_preset(Control.PRESET_CENTER)
+	_menu.custom_minimum_size = Vector2(MENU_WIDTH, 0)
+	_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 3)
+	_menu_title.add_theme_color_override("font_color", UITheme.ACCENT)
+	box.add_child(_menu_title)
+	_menu_list.add_theme_constant_override("separation", 0)
+	box.add_child(_menu_list)
+	_menu_footer.add_theme_font_size_override("font_size", 8)
+	_menu_footer.add_theme_color_override("font_color", UITheme.DIM_TEXT)
+	box.add_child(_menu_footer)
+	_menu.add_child(box)
+	_root.add_child(_menu)
+
+
+func _on_menu_started(title: String, options: Array[String], footer: String, selected: int) -> void:
+	_menu_title.text = title
+	_menu_footer.text = footer + "      W/S: choose   E: pick   Esc: leave"
+	_menu_options = options
+	_menu_index = selected
+	_opened_frame = Engine.get_process_frames()
+	for child in _menu_list.get_children():
+		_menu_list.remove_child(child)
+		child.queue_free()
+	for i in options.size():
+		var label := Label.new()
+		label.text = options[i]
+		label.custom_minimum_size.x = MENU_WIDTH - 12
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		_menu_list.add_child(label)
+	_refresh_menu()
+	_set_hotbar_visible(false)
+	_menu.show()
+	# Re-center after the size changes.
+	await get_tree().process_frame
+	_menu.position = ((_root.size - _menu.size) / 2.0).round() - Vector2(0, 20)
+
+
+func _on_menu_finished(_index: int) -> void:
+	_menu.hide()
+	_set_hotbar_visible(not _dialogue_box.visible)
+
+
+func _refresh_menu() -> void:
+	var labels := _menu_list.get_children()
+	for i in labels.size():
+		var label: Label = labels[i]
+		var selected := i == _menu_index
+		label.text = ("> " if selected else "  ") + _menu_options[i]
+		label.add_theme_color_override("font_color", UITheme.ACCENT if selected else UITheme.TEXT)
+
+
+func _handle_menu_input(event: InputEvent) -> void:
+	if Engine.get_process_frames() == _opened_frame:
+		return
+	if event.is_action_pressed("move_up") or event.is_action_pressed("ui_up"):
+		_menu_index = wrapi(_menu_index - 1, 0, _menu_options.size())
+		_ui_move.play()
+		_refresh_menu()
+	elif event.is_action_pressed("move_down") or event.is_action_pressed("ui_down"):
+		_menu_index = wrapi(_menu_index + 1, 0, _menu_options.size())
+		_ui_move.play()
+		_refresh_menu()
+	elif event.is_action_pressed("interact") or event.is_action_pressed("use_tool") or event.is_action_pressed("ui_accept"):
+		_ui_select.play()
+		get_viewport().set_input_as_handled()
+		UI.end_menu(_menu_index)
+	elif event.is_action_pressed("ui_cancel") or event.is_action_pressed("backpack"):
+		get_viewport().set_input_as_handled()
+		UI.end_menu(-1)
+	else:
+		return
+	get_viewport().set_input_as_handled()

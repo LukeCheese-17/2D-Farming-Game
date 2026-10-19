@@ -143,3 +143,19 @@ func put(index: int, stack: ItemStack) -> ItemStack:
 	_slots[index] = stack
 	changed.emit()
 	return current
+
+
+## Swaps one item for another in the same slot (tool upgrades).
+func replace(old_item: ItemData, new_item: ItemData) -> void:
+	for i in SIZE:
+		if _slots[i] and _slots[i].item == old_item:
+			_slots[i] = ItemStack.new(new_item, 1)
+			changed.emit()
+			return
+	add(new_item)
+
+
+## Empties every slot (used when loading a save).
+func clear() -> void:
+	_slots.fill(null)
+	changed.emit()

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FishData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/glass_eel.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+item = ExtResource("1")
+weight = 1
+places = 2
+time = 2
+zone_degrees = 28.0
+needle_speed = 330.0
+hits_needed = 4

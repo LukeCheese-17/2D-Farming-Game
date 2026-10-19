@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ShopData" format=3]
+
+[ext_resource type="Resource" path="res://data/village/recipes/copper_axe.tres" id="1"]
+[ext_resource type="Resource" path="res://data/village/recipes/iron_axe.tres" id="2"]
+[ext_resource type="Resource" path="res://data/village/recipes/gold_axe.tres" id="3"]
+[ext_resource type="Resource" path="res://data/village/recipes/copper_pickaxe.tres" id="4"]
+[ext_resource type="Resource" path="res://data/village/recipes/iron_pickaxe.tres" id="5"]
+[ext_resource type="Resource" path="res://data/village/recipes/gold_pickaxe.tres" id="6"]
+[ext_resource type="Resource" path="res://data/village/recipes/copper_sword.tres" id="7"]
+[ext_resource type="Resource" path="res://data/village/recipes/iron_sword.tres" id="8"]
+[ext_resource type="Resource" path="res://data/village/recipes/gold_sword.tres" id="9"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/data/shop_data.gd" id="12"]
+
+[resource]
+script = ExtResource("12")
+title = "Blacksmith"
+stock = Array[ExtResource("10")]([])
+recipes = Array[ExtResource("11")]([ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9")])
+greeting = "The forge is already hot when you arrive. It always is. Leave the materials. Come back for the tool."

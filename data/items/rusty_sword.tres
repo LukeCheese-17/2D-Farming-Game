@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/Generated/rusty_sword.png" id="1"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = &"rusty_sword"
+display_name = "Rusty sword"
+icon = ExtResource("1")
+max_stack = 1
+tool = 6
+damage = 3

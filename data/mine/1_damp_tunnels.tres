@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="MineFloorData" format=3]
+
+[ext_resource type="Resource" path="res://data/enemies/crawler.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="2"]
+[ext_resource type="Resource" path="res://data/items/stone.tres" id="3"]
+[ext_resource type="Resource" path="res://data/items/copper_ore.tres" id="4"]
+[ext_resource type="Resource" path="res://data/items/iron_ore.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/data/mine_floor_data.gd" id="6"]
+
+[resource]
+script = ExtResource("6")
+display_name = "Damp Tunnels"
+biome = 0
+rock_hardness = 2
+stone = ExtResource("3")
+ore = ExtResource("4")
+ore_chance = 0.3
+rare_ore = ExtResource("5")
+rare_chance = 0.03
+rock_count = 34
+enemies = Array[ExtResource("2")]([ExtResource("1")])
+enemy_count = 4
+arrival_text = "Water drips somewhere you can\'t see."

@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/Generated/cave_entrance.png" id="1_tex"]
+[ext_resource type="Script" path="res://scripts/interact_area.gd" id="2_interact"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(46, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_side"]
+size = Vector2(12, 12)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_area"]
+size = Vector2(22, 14)
+
+[node name="CaveEntrance" type="StaticBody2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.78, 0.74, 0.72, 1)
+position = Vector2(0, -16)
+texture = ExtResource("1_tex")
+
+[node name="Top" type="CollisionShape2D" parent="."]
+position = Vector2(0, -22)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Left" type="CollisionShape2D" parent="."]
+position = Vector2(-16, -7)
+shape = SubResource("RectangleShape2D_side")
+
+[node name="Right" type="CollisionShape2D" parent="."]
+position = Vector2(16, -7)
+shape = SubResource("RectangleShape2D_side")
+
+[node name="InteractArea" type="Area2D" parent="."]
+position = Vector2(0, -2)
+script = ExtResource("2_interact")
+prompt = "E: Climb down into the mine"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("RectangleShape2D_area")

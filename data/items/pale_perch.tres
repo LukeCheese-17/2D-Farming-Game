@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="ItemData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
-[ext_resource type="Texture2D" path="res://assets/Generated/fish_pale_perch.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/Generated/fish_pale_perch.png" id="1"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="2"]
 
 [resource]
-script = ExtResource("1_item")
+script = ExtResource("2")
 id = &"pale_perch"
 display_name = "Pale perch"
-icon = ExtResource("2_tex")
+icon = ExtResource("1")
 sell_price = 40

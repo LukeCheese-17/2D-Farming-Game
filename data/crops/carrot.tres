@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CropData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/Generated/crop_carrot_0.png" id="1"]
+[ext_resource type="Texture2D" path="res://assets/Generated/crop_carrot_1.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/Generated/crop_carrot_2.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/Generated/crop_carrot_3.png" id="4"]
+[ext_resource type="Resource" path="res://data/items/carrot_seeds.tres" id="5"]
+[ext_resource type="Resource" path="res://data/items/carrot.tres" id="6"]
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="7"]
+
+[resource]
+script = ExtResource("7")
+id = &"carrot"
+display_name = "Carrot"
+stage_textures = Array[Texture2D]([ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4")])
+days_to_grow = 4
+seed = ExtResource("5")
+produce = ExtResource("6")
+harvest_amount = 1

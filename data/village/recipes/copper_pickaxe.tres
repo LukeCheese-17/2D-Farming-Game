@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/copper_ore.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="2"]
+[ext_resource type="Resource" path="res://data/items/copper_pickaxe.tres" id="3"]
+[ext_resource type="Resource" path="res://data/items/pickaxe.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="5"]
+
+[resource]
+script = ExtResource("5")
+result = ExtResource("3")
+inputs = Array[ExtResource("2")]([ExtResource("1")])
+amounts = Array[int]([5])
+price = 100
+replaces = ExtResource("4")

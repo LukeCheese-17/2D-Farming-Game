@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/wood.tres" id="1"]
+[ext_resource type="Resource" path="res://data/items/stone.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3"]
+[ext_resource type="Resource" path="res://data/village/general_store_shop.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/data/building_data.gd" id="5"]
+
+[resource]
+script = ExtResource("5")
+id = &"general_store"
+display_name = "General store"
+ruin_text = "The shelves are bare. A sign in the window says BACK SOON.\nThe dust says otherwise."
+materials = Array[ExtResource("3")]([ExtResource("1"), ExtResource("2")])
+amounts = Array[int]([30, 20])
+price = 200
+shop = ExtResource("4")

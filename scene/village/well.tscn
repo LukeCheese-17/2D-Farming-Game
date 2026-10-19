@@ -1,0 +1,32 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scene/objects/readable.gd" id="1_readable"]
+[ext_resource type="Texture2D" path="res://assets/Generated/well.png" id="2_tex"]
+[ext_resource type="Script" path="res://scripts/interact_area.gd" id="3_interact"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(22, 8)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_area"]
+size = Vector2(34, 22)
+
+[node name="Well" type="StaticBody2D"]
+script = ExtResource("1_readable")
+drinkable = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.8, 0.76, 0.72, 1)
+position = Vector2(0, -14)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -6)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="InteractArea" type="Area2D" parent="."]
+position = Vector2(0, 2)
+script = ExtResource("3_interact")
+prompt = "E: Drink from the well"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("RectangleShape2D_area")

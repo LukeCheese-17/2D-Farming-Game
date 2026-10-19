@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="MineFloorData" format=3]
+
+[ext_resource type="Resource" path="res://data/enemies/rattler.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="2"]
+[ext_resource type="Resource" path="res://data/items/stone.tres" id="3"]
+[ext_resource type="Resource" path="res://data/items/gold_ore.tres" id="4"]
+[ext_resource type="Resource" path="res://data/items/bone.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/data/mine_floor_data.gd" id="6"]
+
+[resource]
+script = ExtResource("6")
+display_name = "Bone Gallery"
+biome = 2
+rock_hardness = 4
+stone = ExtResource("3")
+ore = ExtResource("4")
+ore_chance = 0.18
+rare_ore = ExtResource("5")
+rare_chance = 0.2
+rock_count = 32
+enemies = Array[ExtResource("2")]([ExtResource("1")])
+enemy_count = 6
+arrival_text = "The walls are packed with bones. Small ones."

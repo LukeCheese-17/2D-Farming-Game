@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ShopData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/wheat_seeds.tres" id="1"]
+[ext_resource type="Resource" path="res://data/items/tomato_seeds.tres" id="2"]
+[ext_resource type="Resource" path="res://data/items/carrot_seeds.tres" id="3"]
+[ext_resource type="Resource" path="res://data/items/turnip_seeds.tres" id="4"]
+[ext_resource type="Resource" path="res://data/items/pumpkin_seeds.tres" id="5"]
+[ext_resource type="Resource" path="res://data/items/bread.tres" id="6"]
+[ext_resource type="Resource" path="res://data/items/water_flask.tres" id="7"]
+[ext_resource type="Resource" path="res://data/items/stew.tres" id="8"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/data/shop_data.gd" id="11"]
+
+[resource]
+script = ExtResource("11")
+title = "General store"
+stock = Array[ExtResource("9")]([ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")])
+recipes = Array[ExtResource("10")]([])
+greeting = "No one is behind the counter. Prices are chalked on the wall. You leave the money in the tin."

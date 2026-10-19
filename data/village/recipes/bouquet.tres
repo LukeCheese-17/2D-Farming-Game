@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/tulip.tres" id="1"]
+[ext_resource type="Resource" path="res://data/items/bluebell.tres" id="2"]
+[ext_resource type="Resource" path="res://data/items/rose.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="4"]
+[ext_resource type="Resource" path="res://data/items/bouquet.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="6"]
+
+[resource]
+script = ExtResource("6")
+result = ExtResource("5")
+inputs = Array[ExtResource("4")]([ExtResource("1"), ExtResource("2"), ExtResource("3")])
+amounts = Array[int]([1, 1, 1])
+price = 20

@@ -14,7 +14,8 @@ var progress := 0
 ## Result of the last finished job: "", "done" or "failed". The caller mentions it on his next call.
 var last_result := ""
 
-var _next_index := 0
+## Index of the job he gives next (keeps counting past the end of the list).
+var next_index := 0
 
 
 func _init(job_list: Array[JobData]) -> void:
@@ -22,7 +23,7 @@ func _init(job_list: Array[JobData]) -> void:
 
 
 func get_next() -> JobData:
-	return jobs[_next_index % jobs.size()]
+	return jobs[next_index % jobs.size()]
 
 
 ## Starts the next job on the given day and returns it.
@@ -30,7 +31,7 @@ func accept_next(day: int) -> JobData:
 	active = get_next()
 	deadline = day + active.days - 1
 	progress = 0
-	_next_index += 1
+	next_index += 1
 	changed.emit()
 	return active
 

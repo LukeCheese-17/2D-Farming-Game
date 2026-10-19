@@ -28,3 +28,5 @@ func is_ripe() -> bool:
 
 func _refresh() -> void:
 	_sprite.texture = data.stage_textures[data.get_stage(watered_days)]
+	# Tall plants (sunflowers) grow upward from the same base.
+	_sprite.offset.y = -(_sprite.texture.get_height() - 16) / 2.0

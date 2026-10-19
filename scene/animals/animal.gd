@@ -71,6 +71,11 @@ func stare_at(point: Vector2, seconds: float) -> void:
 	_sprite.flip_h = point.x < global_position.x
 
 
+func set_has_product(value: bool) -> void:
+	has_product = value
+	_bubble.visible = value
+
+
 func _on_day_changed(_day: int) -> void:
 	has_product = true
 	_bubble.show()

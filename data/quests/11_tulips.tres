@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/tulip.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+item = ExtResource("1")
+amount = 3
+reward = 120
+days = 4
+note = "Flowers for the grave behind the store.\n{amount} {item}s. {reward}g."

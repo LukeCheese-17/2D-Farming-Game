@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="MineFloorData" format=3]
+
+[ext_resource type="Resource" path="res://data/enemies/mouthless.tres" id="1"]
+[ext_resource type="Resource" path="res://data/enemies/rattler.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="3"]
+[ext_resource type="Resource" path="res://data/items/stone.tres" id="4"]
+[ext_resource type="Resource" path="res://data/items/heartstone.tres" id="5"]
+[ext_resource type="Resource" path="res://data/items/gold_ore.tres" id="6"]
+[ext_resource type="Script" path="res://scripts/data/mine_floor_data.gd" id="7"]
+
+[resource]
+script = ExtResource("7")
+display_name = "Red Deep"
+biome = 4
+rock_hardness = 6
+stone = ExtResource("4")
+ore = ExtResource("5")
+ore_chance = 0.15
+rare_ore = ExtResource("6")
+rare_chance = 0.15
+rock_count = 30
+enemies = Array[ExtResource("3")]([ExtResource("1"), ExtResource("2")])
+enemy_count = 5
+arrival_text = "The floor is warm. Something under it is breathing."

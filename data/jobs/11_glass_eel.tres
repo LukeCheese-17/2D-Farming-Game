@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="JobData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/glass_eel.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/job_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+item = ExtResource("1")
+amount = 1
+reward = 380
+days = 5
+lines = Array[String](["There\'s an eel in the river you can see through.", "Fish at night. Bring me {amount}. Day {deadline}. {reward}g.", "Don\'t look at what\'s inside it."])

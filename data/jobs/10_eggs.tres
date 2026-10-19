@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="JobData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/egg.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/job_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+item = ExtResource("1")
+amount = 6
+reward = 260
+days = 4
+lines = Array[String](["{amount} {item} by day {deadline}.", "{reward}g.", "If one of them is warm, keep that one."])

@@ -7,6 +7,8 @@ const DUSK_TINT := Color(0.88, 0.64, 0.56)
 const NIGHT_TINT := Color(0.28, 0.31, 0.48)
 ## A dim lamp keeps the house a little warmer at night.
 const INDOOR_NIGHT_TINT := Color(0.55, 0.46, 0.4)
+## Down the mine it is always dark.
+const MINE_TINT := Color(0.42, 0.4, 0.44)
 const EVENING := 17 * 60
 ## How fast the tint follows the clock (it moves in 10-minute steps).
 const BLEND_SPEED := 1.5
@@ -29,8 +31,14 @@ func _process(delta: float) -> void:
 		target = DUSK_TINT.lerp(night_tint, (darkness - 0.5) * 2.0)
 	else:
 		target = DAY_TINT.lerp(night_tint, darkness)
+	if player.in_mine:
+		target = MINE_TINT
+		darkness = 1.0
 	_tint = _tint.lerp(target, minf(1.0, delta * BLEND_SPEED))
 	_material.set_shader_parameter("tint", _tint)
 	_material.set_shader_parameter("desaturation", lerpf(0.3, 0.5, darkness))
 	_material.set_shader_parameter("vignette", lerpf(0.35, 0.8, darkness))
-	_wind.volume_db = -26.0 if player.indoors else lerpf(-20.0, -11.0, darkness)
+	if player.in_mine:
+		_wind.volume_db = -40.0
+	else:
+		_wind.volume_db = -26.0 if player.indoors else lerpf(-20.0, -11.0, darkness)

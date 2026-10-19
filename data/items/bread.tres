@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/Generated/bread.png" id="1"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = &"bread"
+display_name = "Bread"
+icon = ExtResource("1")
+sell_price = 10
+buy_price = 30
+food = 35

@@ -1,31 +1,32 @@
 [gd_resource type="Resource" script_class="CropData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1_data"]
-[ext_resource type="Texture2D" uid="uid://dsa0ypl8tj0uf" path="res://assets/Objects/Basic_Plants.png" id="2_plants"]
-[ext_resource type="Resource" path="res://data/items/wheat_seeds.tres" id="3_seed"]
-[ext_resource type="Resource" path="res://data/items/wheat.tres" id="4_produce"]
+[ext_resource type="Texture2D" path="res://assets/Objects/Basic_Plants.png" id="1"]
+[ext_resource type="Resource" path="res://data/items/wheat_seeds.tres" id="2"]
+[ext_resource type="Resource" path="res://data/items/wheat.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="4"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1"]
-atlas = ExtResource("2_plants")
+atlas = ExtResource("1")
 region = Rect2(16, 0, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2"]
-atlas = ExtResource("2_plants")
+atlas = ExtResource("1")
 region = Rect2(32, 0, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3"]
-atlas = ExtResource("2_plants")
+atlas = ExtResource("1")
 region = Rect2(48, 0, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4"]
-atlas = ExtResource("2_plants")
+atlas = ExtResource("1")
 region = Rect2(64, 0, 16, 16)
 
 [resource]
-script = ExtResource("1_data")
+script = ExtResource("4")
 id = &"wheat"
 display_name = "Wheat"
 stage_textures = Array[Texture2D]([SubResource("AtlasTexture_1"), SubResource("AtlasTexture_2"), SubResource("AtlasTexture_3"), SubResource("AtlasTexture_4")])
 days_to_grow = 3
-seed = ExtResource("3_seed")
-produce = ExtResource("4_produce")
+seed = ExtResource("2")
+produce = ExtResource("3")
+harvest_amount = 1

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/bone.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+item = ExtResource("1")
+amount = 3
+reward = 150
+days = 4
+note = "We need {amount} {item}s.\nDon\'t ask whose. {reward}g."

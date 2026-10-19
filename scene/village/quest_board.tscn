@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scene/village/quest_board.gd" id="1_board"]
+[ext_resource type="Texture2D" path="res://assets/Generated/quest_board.png" id="2_tex"]
+[ext_resource type="Script" path="res://scripts/interact_area.gd" id="3_interact"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(26, 6)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_area"]
+size = Vector2(34, 18)
+
+[node name="QuestBoard" type="StaticBody2D"]
+script = ExtResource("1_board")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.8, 0.76, 0.72, 1)
+position = Vector2(0, -15)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="InteractArea" type="Area2D" parent="."]
+position = Vector2(0, 6)
+script = ExtResource("3_interact")
+prompt = "E: Read the notices"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("RectangleShape2D_area")
