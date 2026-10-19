@@ -127,7 +127,7 @@ The mine (MIN) is the one exception: it has enemies.
 | FSH-1 | The player can fish with the fishing rod by facing water and using the tool. |
 | FSH-2 | After casting, there is a wait, then a bite starts a timing-ring minigame: a needle sweeps around a dial and the player presses Space while it is in the lit zone. Enough hits in a row land the fish; a miss, or waiting too long, lets it go. Harder fish have a smaller zone, a faster needle and need more hits. |
 | FSH-3 | A caught fish goes into the inventory. There are at least two fish types, defined as data. |
-| FSH-4 | Fish can be shipped and sold, and can be asked for in phone tasks. |
+| FSH-4 | Fish can be shipped and sold, and can be asked for in quests. |
 | FSH-5 | There is a wide variety of fish (at least 10), each with its own difficulty, price and where/when it can be caught (e.g. pond vs river, day vs night). |
 
 ## 13. Animals
@@ -137,7 +137,7 @@ The mine (MIN) is the one exception: it has enemies.
 | ANM-1 | The player raises farm animals: at least chickens and cows (sprites exist in `assets/Characters`). |
 | ANM-2 | Animals live in a fenced area or coop and wander around it. |
 | ANM-3 | Animals produce goods once per day (chickens → eggs, cows → milk), which the player collects with the hand. |
-| ANM-4 | Animal products can be shipped and sold, and can be asked for in phone tasks. |
+| ANM-4 | Animal products can be shipped and sold, and can be asked for in quests. |
 
 ## 14. Technical requirements
 
@@ -146,7 +146,7 @@ The mine (MIN) is the one exception: it has enemies.
 | TEC-1 | Engine: Godot 4.6, GDScript, 640×360 viewport with integer scaling and nearest filtering (already configured). |
 | TEC-2 | Ground uses `TileMapLayer` nodes with the shared `game_tile_set.tres`. |
 | TEC-3 | The tileset has a physics layer for blocking tiles and a custom data layer (`can_till: bool`) for tillable ground. |
-| TEC-4 | Crop types are defined as data (e.g. a `Resource` per crop: name, stage sprites, days to grow, produce) so new crops can be added without new code. The same applies to fish, animals, sellable items and phone tasks. |
+| TEC-4 | Crop types are defined as data (e.g. a `Resource` per crop: name, stage sprites, days to grow, produce) so new crops can be added without new code. The same applies to fish, animals, sellable items and quests. |
 | TEC-5 | Input uses named actions in the Input Map (`move_up`, `move_down`, `move_left`, `move_right`, `use_tool`, `interact`, `hotbar_1`…`hotbar_10`, `hotbar_next`, `hotbar_previous`, `backpack`), not hard-coded keys. |
 | TEC-6 | Characters and objects y-sort so the player can walk behind trees and in front of them. |
 
@@ -164,6 +164,7 @@ The mine (MIN) is the one exception: it has enemies.
 | NED-1 | The player has food and water meters, shown on screen, that go down over time. |
 | NED-2 | The player eats food items and drinks water to refill them. |
 | NED-3 | Low food or water has consequences (e.g. slower movement, fainting). |
+| NED-4 | Food also restores some health (stew and bread the most); eating when it would do nothing is refused. |
 
 ## 17. Tools: axe and pickaxe
 
@@ -232,8 +233,8 @@ Other choices made while building:
 - **Health:** only matters in the mine. Fainting there means waking up at home the next morning with 10% of your money gone (max 200g). Sleeping restores health.
 - **Mine:** five floors (Damp Tunnels, Root Hollow, Bone Gallery, Frozen Dark, Red Deep), dug out fresh each visit; a ladder down sits at the far end of each floor. The lift at the entrance goes to any floor already reached. A rusty sword waits on floor 1 the first time. Something waits at the bottom of floor 5.
 - **Village:** rebuilding a building costs materials + money and finishes overnight ("nobody heard any hammering"). General store = seeds and food; flower shop = flower seeds and bouquets; blacksmith = copper/iron/gold axes, pickaxes and swords (the new tool replaces the old one in its slot). A fourth house stays boarded up.
-- **Quest board:** three notes each morning from `data/quests`; take up to three, bring the items back to the board before the deadline. Nobody is ever seen pinning them.
-- **Saving:** autosaves every morning; the pause menu also saves. Continue on the title screen loads it.
+- **Quest board:** one main quest from `data/quests/main` plus two daily notes from `data/quests`, refreshed each morning. Items are handed in at the board. Nobody is ever seen pinning them.
+- **Saving:** autosaves every morning to the current slot; the pause menu also saves. A save from before slots existed becomes slot 1.
 
 ## Out of scope (for now)
 
@@ -244,7 +245,7 @@ Seasons and crafting. (Saving, mine enemies and the village are now in scope —
 Starting a new game, the player can:
 1. Walk to grass, till it, plant a seed, water it, sleep enough times for it to ripen, and harvest it.
 2. Catch a fish, and collect an egg or milk from an animal.
-3. Answer the ringing phone and receive a task.
-4. Put items in the shipping box, sleep, and see them sold for money, with the task paid out when completed.
+3. Answer the landowner's call, see the first main quest on the village board, complete it and call him to get paid.
+4. Put items in the shipping box, sleep, and see them sold for money.
 
 All while the farm feels quietly watched, and nothing ever appears.
