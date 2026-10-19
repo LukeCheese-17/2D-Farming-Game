@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/copper_ore.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+kind = 0
+title = "Dig deeper"
+item = ExtResource("1")
+amount = 10
+reward = 300
+note = "Copper. {amount} {item}.\nDon't ask what it's for."

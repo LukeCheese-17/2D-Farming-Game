@@ -1,21 +1,27 @@
 extends StaticBody2D
-## The landline. The man calls with jobs (see JobData) when the player has none.
-## Some nights it rings with no one on the line. When it isn't ringing, the player
-## can use it to order seeds.
+## The landline. The man who sold the player the land calls on the first morning
+## and pins the first main quest on the village board. After that the player calls
+## him: he pays for finished main quests and takes supply orders (delivered by
+## morning). Some nights it rings with no one on the line.
 
-enum Ring { NONE, JOB, SILENT }
+enum Ring { NONE, INTRO, SILENT }
 
-## Earliest and latest time (minutes) a job call can start; day 1 calls soon after waking.
-const JOB_CALL_EARLIEST := 7 * 60
-const JOB_CALL_LATEST := 10 * 60
-const FIRST_DAY_CALL := 6 * 60 + 20
-## An unanswered job call stops ringing at this time and tries again tomorrow.
-const JOB_CALL_GIVE_UP := 21 * 60
+## When his first call comes; if missed, he tries again the next morning.
+const INTRO_CALL := 6 * 60 + 20
+const INTRO_GIVE_UP := 21 * 60
 const SILENT_CALL_CHANCE := 0.3
 const SILENT_CALL_LENGTH := 20
 
+const INTRO_LINES: Array[String] = [
+	"So you're the one that bought this land.",
+	"Well... it's pretty run down. You'll have to liven this place up a bit.",
+	"I'll send you some quests on that board in the village center.",
+	"Come back to me when you've got a quest done and I'll send you the cash.",
+	"Also, call me if you ever need more supplies. I've got the basics, if you need.",
+]
+
 var _ring := Ring.NONE
-var _job_call_at := -1
+var _intro_call_at := -1
 var _silent_call_at := -1
 var _ring_started := 0
 
@@ -29,7 +35,6 @@ func _ready() -> void:
 	_area.interacted.connect(_on_interacted)
 	GameState.day_changed.connect(func(_day: int) -> void: _schedule_calls())
 	GameState.time_changed.connect(_on_time_changed)
-	GameState.jobs.changed.connect(_schedule_job_call)
 	_schedule_calls()
 
 
@@ -45,33 +50,23 @@ func _process(_delta: float) -> void:
 
 
 func _schedule_calls() -> void:
-	_job_call_at = -1
-	_schedule_job_call()
+	_intro_call_at = -1
+	if not GameState.quests.main_posted:
+		_intro_call_at = maxi(INTRO_CALL, GameState.minutes + 10)
 	_silent_call_at = -1
 	if GameState.day > 1 and randf() < SILENT_CALL_CHANCE:
 		_silent_call_at = randi_range(22 * 60, 25 * 60)
 
 
-func _schedule_job_call() -> void:
-	if GameState.jobs.active or _ring == Ring.JOB:
-		_job_call_at = -1
-	elif _job_call_at < 0:
-		if GameState.day == 1:
-			_job_call_at = FIRST_DAY_CALL
-		else:
-			_job_call_at = maxi(randi_range(JOB_CALL_EARLIEST, JOB_CALL_LATEST), GameState.minutes + 10)
-
-
 func _on_time_changed(minutes: int) -> void:
-	if _ring == Ring.JOB and minutes >= JOB_CALL_GIVE_UP:
+	if _ring == Ring.INTRO and minutes >= INTRO_GIVE_UP:
 		_stop_ringing()
-		_job_call_at = -1
 	elif _ring == Ring.SILENT and minutes >= _ring_started + SILENT_CALL_LENGTH:
 		_stop_ringing()
 	elif _ring == Ring.NONE:
-		if _job_call_at >= 0 and minutes >= _job_call_at and minutes < JOB_CALL_GIVE_UP:
-			_job_call_at = -1
-			_start_ringing(Ring.JOB)
+		if _intro_call_at >= 0 and minutes >= _intro_call_at and minutes < INTRO_GIVE_UP:
+			_intro_call_at = -1
+			_start_ringing(Ring.INTRO)
 		elif _silent_call_at >= 0 and minutes >= _silent_call_at:
 			_silent_call_at = -1
 			_start_ringing(Ring.SILENT)
@@ -95,40 +90,52 @@ func _stop_ringing() -> void:
 
 func _on_interacted() -> void:
 	match _ring:
-		Ring.JOB:
+		Ring.INTRO:
 			_stop_ringing()
-			_give_job()
+			GameState.quests.post_main()
+			UI.show_dialogue(INTRO_LINES)
 		Ring.SILENT:
 			_stop_ringing()
 			UI.show_dialogue(["...", "(Someone is breathing on the other end.)", "(The line goes dead.)"])
 		Ring.NONE:
-			_offer_seeds()
+			_call()
 
 
-func _give_job() -> void:
-	var lines: Array[String] = []
-	var board := GameState.jobs
-	match board.last_result:
-		"done":
-			lines.append("You did what I asked. Good.")
-		"failed":
-			lines.append("You let me down. Don't do it again.")
-	board.last_result = ""
-	var job := board.accept_next(GameState.day)
-	lines.append_array(job.get_lines(board.deadline))
-	UI.show_dialogue(lines)
-
-
-func _offer_seeds() -> void:
-	var seed := GameState.crops[0].seed
-	UI.show_dialogue(
-		["A seed catalogue is taped to the wall by the phone.",
-		"%d %s, %dg. Delivered by morning." % [GameState.SEED_ORDER_AMOUNT, seed.display_name, GameState.SEED_ORDER_PRICE]],
-		["Order", "Hang up"])
-	var choice: int = await UI.dialogue_finished
-	if choice != 0:
+## The player calls him: he pays for a finished main quest, then takes orders.
+func _call() -> void:
+	var board := GameState.quests
+	if not board.main_posted:
+		UI.show_dialogue(["(Only a dial tone. You don't know anyone to call yet.)"])
 		return
-	if GameState.order_seeds():
-		UI.post_message("Ordered. -%dg" % GameState.SEED_ORDER_PRICE)
-	else:
-		UI.post_message("Not enough money.")
+	if board.is_main_done():
+		var quest := board.get_main()
+		var reward := board.pay_main()
+		GameState.add_money(reward)
+		var lines: Array[String] = ["\"%s. I saw. Good work.\"" % quest.title, "\"%dg. It's already in your pocket. Don't ask how.\"" % reward]
+		lines.append("\"There's a new note on the board.\"" if board.get_main() else "\"That's everything I needed. The place looks alive again.\"")
+		UI.show_dialogue(lines)
+		await UI.dialogue_finished
+		UI.post_message("+%dg" % reward)
+	await _order_supplies()
+
+
+func _order_supplies() -> void:
+	var shop := GameState.SUPPLIES
+	var index := 0
+	while true:
+		var options: Array[String] = []
+		for item in shop.stock:
+			options.append("%s - %dg" % [item.display_name, item.buy_price])
+		options.append("Hang up")
+		var ordered := 0
+		for count: int in GameState.get_supply_order().values():
+			ordered += count
+		UI.show_menu("\"What do you need?\"", options, "You have %dg. Ordered: %d" % [GameState.money, ordered], index)
+		index = await UI.menu_finished
+		if index < 0 or index == options.size() - 1:
+			return
+		var item := shop.stock[index]
+		if GameState.order_supply(item):
+			UI.post_message("Ordered %s. It'll be by the door in the morning." % item.display_name)
+		else:
+			UI.post_message("Not enough money.")

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+kind = 2
+title = "The bottom"
+mine_floor = 4
+reward = 600
+note = "Floor four. That's as deep as anyone ever went.\nGo look. Then come back up."

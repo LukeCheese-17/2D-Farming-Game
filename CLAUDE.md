@@ -4,10 +4,10 @@ Godot 4.6 GDScript, top-down pixel-art farming game with a no-monster horror moo
 `REQUIREMENTS.md` is the source of truth for features (IDs like FSH-2, ATM-3).
 
 ## Layout
-- `scripts/` â€” shared code. Autoloads: `UI` (`ui.gd`: dialogue, list menus, messages, prompt, backpack, fishing signals, options) and `GameState` (`game_state.gd`: day/clock, money, needs/health, shipping, sleep, village state, mine progress; owns `inventory`, `jobs: JobBoard`, `quests: QuestBoard`). Also `world_area.gd` (base of Farm and Mine), `shop.gd`, `save_game.gd` (JSON save), `ui_theme.gd` (shared look), `tools.gd` (tool enum).
-- `scripts/data/` â€” Resource types: ItemData, CropData, FishData, JobData, AnimalData, QuestData, EnemyData, MineFloorData, BuildingData, ShopData, RecipeData.
-- `data/` â€” `.tres` instances (items, crops, fish, jobs, quests, animals, enemies, mine floors, village buildings/shops/recipes). Add content here, not in code.
-- `scene/` â€” `main/` (main.tscn, farm.gd, tile highlight), `player/`, `house/`, `objects/` (bed, phone, shipping box, signpost), `animals/`, `crops/`, `mine/` (mine.gd builds floors in code, enemy.gd, cave entrance), `village/` (buildings, quest board, well), `menus/` (title = main scene, pause menu, options), `atmosphere/`, `ui/` (hud, inventory slot, fishing ring).
+- `scripts/` â€” shared code. Autoloads: `UI` (`ui.gd`: dialogue, list menus, messages, prompt, backpack, fishing signals, options) and `GameState` (`game_state.gd`: day/clock, money, needs/health, shipping, sleep, village state, mine progress; phone supply orders; owns `inventory`, `quests: QuestBoard` = main quest chain + 2 daily notes). Also `world_area.gd` (base of Farm and Mine), `shop.gd`, `save_game.gd` (JSON save, 3 slots), `ui_theme.gd` (shared look), `tools.gd` (tool enum).
+- `scripts/data/` â€” Resource types: ItemData, CropData, FishData, AnimalData, QuestData, EnemyData, MineFloorData, BuildingData, ShopData, RecipeData.
+- `data/` â€” `.tres` instances (items, crops, fish, quests (main chain in `quests/main`), phone supplies, animals, enemies, mine floors, village buildings/shops/recipes). Add content here, not in code.
+- `scene/` â€” `main/` (main.tscn, farm.gd, tile highlight), `player/`, `house/`, `objects/` (bed, phone, shipping box, signpost), `animals/`, `crops/`, `mine/` (mine.gd builds floors in code, enemy.gd, cave entrance), `village/` (buildings, quest board, well), `menus/` (title = main scene, intro cutscene, pause menu, options), `atmosphere/`, `ui/` (hud, inventory slot, fishing ring).
 - `tools/` â€” `generate_assets.gd` draws `assets/Generated/` (placeholder art + sounds); `build_world.gd` repaints the surface map into main.tscn. Run with `-s`, then re-import.
 - `scene/test/` â€” the user's old test scenes.
 

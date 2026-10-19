@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+kind = 1
+title = "Hammer and anvil"
+building = &"blacksmith"
+reward = 500
+note = "The forge has been cold too long.\nRebuild the blacksmith."

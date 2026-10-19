@@ -1,14 +1,15 @@
 # Requirements — 2D Creepy Cozy Farm
 
 A top-down 2D farming game built in Godot 4.6 (GDScript) with a **horror atmosphere and no monster**.
-You live alone in a run-down house. A landline rings, and a man on the other end gives you jobs
-for money. You farm, fish and raise animals, put what you make in the shipping box, and everything
-in the box is sold each time you sleep. The whole time, it should feel like something is watching you.
+Fired from a dead-end job and left homeless, you spend the last of your money on cheap land: a
+run-down farm. A landline rings, and the man who sold it to you posts quests on the village board
+and pays you for them. You farm, fish and raise animals, put what you make in the shipping box, and
+everything in the box is sold each time you sleep. The whole time, it should feel like something is watching you.
 
 The core loops are:
 - **Farming:** plant → water → wait → harvest
 - **Earning:** gather (farm / fish / animals) → shipping box → sleep → get paid
-- **Jobs:** phone rings → take a task → complete it → get paid
+- **Quests:** main quest on the board → complete it → call him → get paid; two small daily notes on the board
 
 ## 1. Player movement
 
@@ -97,19 +98,17 @@ The mine (MIN) is the one exception: it has enemies.
 | HSE-2 | The player can enter and leave the house. |
 | HSE-3 | The bed (where the player sleeps to end the day, TIM-2) and the landline phone are inside the house. |
 
-## 10. Landline and jobs
+## 10. Landline
 
 | ID | Requirement |
 |----|-------------|
 | PHN-1 | A landline phone in the house rings at times, with a ringing sound and a visual cue (for example, the phone shaking and a "ring" icon). |
 | PHN-2 | The player answers by walking to the phone and pressing the interact key. |
-| PHN-3 | The caller is a man who gives the player a task for money, shown as dialogue text. Example: "Ship 10 wheat by day 5. I'll pay 200." |
-| PHN-4 | A task asks for items the player can farm, fish or get from animals, an amount, and a deadline (day). |
-| PHN-5 | The current task (what, how many, progress, deadline, reward) is shown on screen. |
-| PHN-6 | When the task's items are shipped (see SHP) before the deadline, the reward money is paid out. |
+| PHN-3 | On the first morning the man who sold the land calls: "So you're the one that bought this land... I'll send you some quests on that board in the village center. Come back to me when you've got a quest done and I'll send you the cash. Also call me if you ever need more supplies." His call puts the first main quest on the board (QST-3). If missed, he calls again the next morning. |
+| PHN-4 | After that, the player uses the phone to call him. If the current main quest is done, he pays its reward and the next main quest goes up. |
+| PHN-5 | Calling him also lets the player order basic supplies (seeds, bread, water); orders are left at the door the next morning. |
 | PHN-7 | The caller's lines stay short and slightly off, adding to the uneasy mood (ATM-2), without ever revealing who or what he is. |
 | PHN-8 | Phone calls only start from 06:00 (the start of the day). |
-| PHN-9 | The day after a job is completed, the phone rings with a new job. |
 
 ## 11. Money and the shipping box
 
@@ -196,28 +195,32 @@ The mine (MIN) is the one exception: it has enemies.
 
 | ID | Requirement |
 |----|-------------|
-| QST-1 | There are more quests (phone jobs and village quests), defined as data. |
-| QST-2 | A daily quest board offers new quests each day. |
+| QST-1 | Quests are defined as data: main quests in `data/quests/main` (in order), daily notes in `data/quests`. |
+| QST-2 | The quest board in the village center shows one main quest and two daily notes. |
+| QST-3 | The main quest only changes when the last one is completed and paid for by phone. Main quests can ask for items (left at the board), a rebuilt village building, or a mine floor reached. |
+| QST-4 | The two daily notes are picked at random every morning, ask for items handed in at the board, and pay a small amount of cash on the spot. |
 
 ## 21. Menus, UI and saving
 
 | ID | Requirement |
 |----|-------------|
 | UI-1 | UI overhaul: a consistent, cleaner look for the HUD, hotbar, backpack, dialogue and menus. |
-| UI-2 | A home (title) screen with at least New Game, Continue and Quit. |
+| UI-2 | A home (title) screen with at least New Game, Continue and Quit. The title reads "GAME" until the game has a name. |
+| UI-5 | New Game plays a wordless intro (show, don't tell): the player is fired from an office job, ends up homeless, finds a flyer for cheap land, buys it with the last of their money and arrives at the run-down farm. It can be skipped. |
 | UI-3 | Pressing Esc pauses the game and opens a pause menu (Resume, Options, Save, Quit to home screen). |
 | UI-4 | The pause menu has options (e.g. volume, fullscreen, controls). |
 | SAV-1 | The game can be saved and loaded (farm, inventory, money, day, animals, quests, village progress). |
+| SAV-2 | There are three save slots. New Game and Continue ask for a slot; starting a new game on a used slot asks first. |
 
 ## Open questions
 
 Things the vision doesn't settle yet. Each has a **provisional answer** chosen so the game could be built
 (2026-10-19); change any of them and the game can be adjusted.
 
-- **What is money for?** *Provisional:* buying seeds. Using the phone when it isn't ringing lets you order 5 wheat seeds for 40g; they're left at the door the next morning. (Without this, the starting seeds run out and farming stops.)
+- **What is money for?** *Provisional:* seeds and supplies (ordered by phone or bought in the village), rebuilding the village, tools and animals.
 - **Do animals need care?** *Provisional:* no. Each animal has one product per day.
-- **What happens when a phone task's deadline is missed?** *Provisional:* the job is lost with no reward, and the caller mentions it on his next call ("You let me down").
-- **Is there an ending or a story?** *Provisional:* not yet. The caller repeats his jobs after the sixth.
+- **Do quests have deadlines?** *Provisional:* main quests don't; daily notes only last the day.
+- **Is there an ending or a story?** *Provisional:* the intro sets it up; after the last main quest he says the place looks alive again. No ending yet.
 - **Sound:** *Provisional:* simple generated placeholder sounds (phone ring, footsteps, wind, splash, bite, door creak) in `assets/Generated/`. Replace them with real recordings when available.
 
 Other choices made while building:

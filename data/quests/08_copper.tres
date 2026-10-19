@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 5
-reward = 120
-days = 4
+reward = 50
 note = "The smith needs {amount} {item}.\nThe smith has been gone for years. {reward}g."

@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 3
-reward = 80
-days = 2
+reward = 30
 note = "{amount} {item}s.\nCount them twice. {reward}g."

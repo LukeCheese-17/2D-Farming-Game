@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+kind = 1
+title = "Something pretty"
+building = &"flower_shop"
+reward = 350
+note = "This place could use some color.\nRebuild the flower shop."

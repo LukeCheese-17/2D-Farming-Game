@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 3
-reward = 250
-days = 5
+reward = 100
 note = "{amount} {item}. For the bell.\n{reward}g. Ring it if you hear it ring first."

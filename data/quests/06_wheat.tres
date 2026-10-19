@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 5
-reward = 110
-days = 4
+reward = 45
 note = "Bread again soon. {amount} {item}.\n{reward}g under the stone."

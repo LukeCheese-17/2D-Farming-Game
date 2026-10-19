@@ -1,5 +1,5 @@
 extends CanvasLayer
-## On-screen info: day and time, money, the phone job and board quests, the food,
+## On-screen info: day and time, money, the main quest and daily notes, the food,
 ## water and health meters, the hotbar and backpack, prompts, messages, the
 ## dialogue box, list menus (shops, the notice board) and the fishing minigame.
 
@@ -11,7 +11,7 @@ const MENU_WIDTH := 300.0
 @onready var _status: VBoxContainer = $Root/Status
 @onready var _clock_label: Label = $Root/Status/ClockLabel
 @onready var _money_label: Label = $Root/Status/MoneyLabel
-@onready var _job_label: Label = $Root/Status/JobLabel
+@onready var _main_label: Label = $Root/Status/JobLabel
 @onready var _hotbar: HBoxContainer = $Root/Hotbar
 @onready var _item_label: Label = $Root/ItemLabel
 @onready var _prompt_label: Label = $Root/PromptLabel
@@ -69,10 +69,13 @@ func _ready() -> void:
 	GameState.day_changed.connect(func(_day: int) -> void: _refresh_quests())
 	GameState.money_changed.connect(func(_money: int) -> void: _refresh_money())
 	GameState.needs_changed.connect(_refresh_meters)
-	GameState.jobs.changed.connect(_refresh_job)
+	GameState.time_changed.connect(func(_minutes: int) -> void: _refresh_main())
+	GameState.village_changed.connect(_refresh_main)
 	GameState.quests.changed.connect(_refresh_quests)
+	GameState.quests.changed.connect(_refresh_main)
 	_inventory.changed.connect(_refresh_slots)
 	_inventory.changed.connect(_refresh_quests)
+	_inventory.changed.connect(_refresh_main)
 	_inventory.selection_changed.connect(_refresh_slots)
 	UI.message_posted.connect(_show_message)
 	UI.prompt_changed.connect(func(text: String) -> void: _prompt_label.text = text)
@@ -91,7 +94,7 @@ func _ready() -> void:
 	_menu.hide()
 	_refresh_clock()
 	_refresh_money()
-	_refresh_job()
+	_refresh_main()
 	_refresh_quests()
 	_refresh_meters()
 	_refresh_slots()
@@ -127,7 +130,7 @@ func _build_status() -> void:
 	_root.move_child(panel, 0)
 	_status.reparent(panel)
 	_money_label.add_theme_color_override("font_color", UITheme.ACCENT)
-	for label: Label in [_job_label, _quest_label]:
+	for label: Label in [_main_label, _quest_label]:
 		label.add_theme_font_size_override("font_size", 8)
 		label.custom_minimum_size.x = 200
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -189,20 +192,29 @@ func _refresh_money() -> void:
 	_money_label.text = "%dg" % GameState.money
 
 
-func _refresh_job() -> void:
-	var board := GameState.jobs
-	_job_label.visible = board.active != null
-	if board.active:
-		_job_label.text = "Phone: %d/%d %s by day %d (%dg)" % [
-			mini(board.progress, board.active.amount), board.active.amount,
-			board.active.item.display_name, board.deadline, board.active.reward]
+func _refresh_main() -> void:
+	var board := GameState.quests
+	var quest := board.get_main()
+	_main_label.visible = quest != null
+	if quest == null:
+		return
+	if board.is_main_done():
+		_main_label.text = "Main: %s - done. Call him." % quest.title
+	elif quest.kind == QuestData.Kind.ITEMS:
+		_main_label.text = "Main: %s - %d/%d %s to the board (%dg)" % [quest.title,
+			mini(_inventory.count(quest.item), quest.amount), quest.amount, quest.item.display_name, quest.reward]
+	else:
+		_main_label.text = "Main: %s - %s (%dg)" % [quest.title, quest.get_goal(), quest.reward]
 
 
 func _refresh_quests() -> void:
 	var lines: PackedStringArray = []
-	for a in GameState.quests.active:
-		lines.append("Board: %d/%d %s by day %d (%dg)" % [mini(_inventory.count(a.quest.item), a.quest.amount),
-			a.quest.amount, a.quest.item.display_name, a.deadline, a.quest.reward])
+	var board := GameState.quests
+	for i in board.daily.size():
+		var quest := board.daily[i]
+		if not board.daily_done[i]:
+			lines.append("Today: %d/%d %s (%dg)" % [mini(_inventory.count(quest.item), quest.amount),
+				quest.amount, quest.item.display_name, quest.reward])
 	_quest_label.text = "\n".join(lines)
 	_quest_label.visible = not lines.is_empty()
 

@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 4
-reward = 70
-days = 3
+reward = 30
 note = "Pick {amount} {item}s from under the trees.\nOnly the ones that grew overnight. {reward}g."

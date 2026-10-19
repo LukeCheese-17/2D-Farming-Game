@@ -1,7 +1,7 @@
 extends Node
 ## Autoload "GameState": the day and clock, money, the shipping box, what happens
 ## overnight, the player's food/water/health, village rebuilding and mine progress.
-## Also owns the player's inventory, the phone jobs and the village quest board.
+## Also owns the player's inventory, the phone supply orders and the village quest board.
 
 signal day_changed(day: int)
 signal time_changed(minutes: int)
@@ -25,9 +25,8 @@ const PASS_OUT_TIME := 26 * 60
 const NIGHT_START := 19 * 60
 const MINUTES_PER_TICK := 10
 const SECONDS_PER_TICK := 7.0
-## Seeds the player can order by phone; they arrive the next morning.
-const SEED_ORDER_AMOUNT := 5
-const SEED_ORDER_PRICE := 40
+## What the man on the phone sells; orders arrive the next morning.
+const SUPPLIES: ShopData = preload("res://data/phone_supplies.tres")
 
 const MAX_NEED := 100.0
 ## How much food and water drop every 10 in-game minutes, and overnight.
@@ -111,7 +110,6 @@ var clock_running := true
 var autosave := true
 
 var inventory: Inventory
-var jobs: JobBoard
 var quests: QuestBoard
 ## Building id -> "ruin", "building" (finished overnight) or "open".
 var village: Dictionary[StringName, String] = {}
@@ -123,7 +121,8 @@ var flags: Dictionary[String, bool] = {}
 var pending_load: Dictionary = {}
 
 var _shipping: Dictionary[ItemData, int] = {}
-var _seed_order := 0
+## Phone orders delivered tomorrow morning: item -> count.
+var _supply_order: Dictionary[ItemData, int] = {}
 var _tick_time := 0.0
 var _fainting := false
 
@@ -142,7 +141,7 @@ func new_game() -> void:
 	health = MAX_HEALTH
 	clock_running = true
 	_shipping.clear()
-	_seed_order = 0
+	_supply_order.clear()
 	_tick_time = 0.0
 	_fainting = false
 	deepest_floor = 0
@@ -153,22 +152,8 @@ func new_game() -> void:
 		if STARTING_TOOLS[i]:
 			inventory.put(i, Inventory.ItemStack.new(STARTING_TOOLS[i], 1))
 	inventory.put(2, Inventory.ItemStack.new(crops[0].seed, STARTING_SEEDS))
-	jobs = JobBoard.new([
-		preload("res://data/jobs/01_wheat.tres"),
-		preload("res://data/jobs/02_perch.tres"),
-		preload("res://data/jobs/03_eggs.tres"),
-		preload("res://data/jobs/04_milk.tres"),
-		preload("res://data/jobs/05_eel.tres"),
-		preload("res://data/jobs/06_wheat.tres"),
-		preload("res://data/jobs/07_carp.tres"),
-		preload("res://data/jobs/08_milk.tres"),
-		preload("res://data/jobs/09_carrots.tres"),
-		preload("res://data/jobs/10_eggs.tres"),
-		preload("res://data/jobs/11_glass_eel.tres"),
-		preload("res://data/jobs/12_pumpkins.tres"),
-	])
-	quests = QuestBoard.new(QuestBoard.load_all("res://data/quests"))
-	quests.new_day(day)
+	quests = QuestBoard.new(QuestBoard.load_all("res://data/quests/main"), QuestBoard.load_all("res://data/quests"))
+	quests.new_day()
 	village.clear()
 	for building in buildings:
 		village[building.id] = "ruin"
@@ -390,28 +375,28 @@ func get_shipping() -> Dictionary[ItemData, int]:
 	return _shipping
 
 
-func get_seed_order() -> int:
-	return _seed_order
+func get_supply_order() -> Dictionary[ItemData, int]:
+	return _supply_order
 
 
 ## Used when loading a save.
-func restore_shipping(shipping: Dictionary[ItemData, int], seed_order: int) -> void:
+func restore_shipping(shipping: Dictionary[ItemData, int], supplies: Dictionary[ItemData, int]) -> void:
 	_shipping = shipping
-	_seed_order = seed_order
+	_supply_order = supplies
 
 
-## Pays for a seed order that arrives tomorrow morning. Returns false if the player can't afford it.
-func order_seeds() -> bool:
-	if money < SEED_ORDER_PRICE:
+## Pays for one item ordered by phone; it arrives tomorrow morning. Returns false if the player can't afford it.
+func order_supply(item: ItemData) -> bool:
+	if money < item.buy_price:
 		return false
-	add_money(-SEED_ORDER_PRICE)
-	_seed_order += SEED_ORDER_AMOUNT
+	add_money(-item.buy_price)
+	_supply_order[item] = _supply_order.get(item, 0) + 1
 	return true
 
 
 # --- Sleeping ---
 
-## Ends the day: sells everything in the shipping box, pays finished jobs,
+## Ends the day: sells everything in the shipping box, delivers phone orders,
 ## finishes village building, and starts the next morning at 6:00.
 ## Returns lines describing what happened.
 func sleep() -> Array[String]:
@@ -421,12 +406,7 @@ func sleep() -> Array[String]:
 		var count: int = _shipping[item]
 		earned += count * item.sell_price
 		report.append("Sold %d %s for %dg." % [count, item.display_name, count * item.sell_price])
-		jobs.record_sold(item, count)
 	_shipping.clear()
-	if jobs.is_complete():
-		earned += jobs.active.reward
-		report.append("An envelope under the door: %dg for the job." % jobs.active.reward)
-		jobs.finish("done")
 	if earned > 0:
 		add_money(earned)
 
@@ -439,23 +419,22 @@ func sleep() -> Array[String]:
 	food = maxf(food - FOOD_OVERNIGHT, 1.0)
 	water = maxf(water - WATER_OVERNIGHT, 1.0)
 	needs_changed.emit()
-	if jobs.active and day > jobs.deadline:
-		report.append("You missed the deadline. The phone is silent.")
-		jobs.finish("failed")
 	for building in buildings:
 		if village[building.id] == "building":
 			village[building.id] = "open"
 			report.append("The %s in the village was finished overnight. Nobody heard any hammering." % building.display_name.to_lower())
 	village_changed.emit()
-	report.append_array(quests.new_day(day))
-	if _seed_order > 0:
-		var seed := crops[0].seed
-		var delivered := _seed_order - inventory.add(seed, _seed_order)
-		_seed_order -= delivered
-		if delivered > 0:
-			report.append("A package was left by the door: %d %s." % [delivered, seed.display_name])
-		if _seed_order > 0:
-			report.append("Your bag is full. The rest of the seeds are still waiting by the door.")
+	quests.new_day()
+	var waiting: Dictionary[ItemData, int] = {}
+	for item in _supply_order:
+		var left := inventory.add(item, _supply_order[item])
+		if left < _supply_order[item]:
+			report.append("A package was left by the door: %d %s." % [_supply_order[item] - left, item.display_name])
+		if left > 0:
+			waiting[item] = left
+	_supply_order = waiting
+	if not waiting.is_empty():
+		report.append("Your bag is full. The rest of the package is still waiting by the door.")
 	if food < LOW_NEED:
 		report.append("Your stomach hurts. You need to eat something.")
 	if water < LOW_NEED:

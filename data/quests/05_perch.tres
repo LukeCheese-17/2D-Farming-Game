@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 2
-reward = 90
-days = 3
+reward = 35
 note = "{amount} {item}. Still wet, if you can. {reward}g."

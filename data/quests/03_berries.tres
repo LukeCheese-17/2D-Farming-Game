@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 6
-reward = 50
-days = 2
+reward = 20
 note = "Berries. {amount} of them.\nRipe ones. They know the difference. {reward}g."

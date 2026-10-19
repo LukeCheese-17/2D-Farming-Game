@@ -1,15 +1,68 @@
 class_name SaveGame
-## Saving and loading (SAV-1): one JSON file with the day, money, needs, inventory,
-## shipping box, phone job, board quests, village, mine progress, the farm's tiles
-## and crops, and the animals. The main scene adds and applies the farm part.
+## Saving and loading (SAV-1): three save slots, each one JSON file with the day,
+## money, needs, inventory, shipping box, phone orders, board quests, village,
+## mine progress, the farm's tiles and crops, and the animals. The main scene adds
+## and applies the farm part.
 
-## Where the save lives (tests point this somewhere else).
-static var path := "user://save.json"
-const VERSION := 1
+const SLOTS := 3
+const VERSION := 2
+
+## The file the current game saves to (use_slot() sets it; tests point it somewhere else).
+static var path := slot_path(0)
+
+
+static func slot_path(slot: int) -> String:
+	return "user://save_%d.json" % (slot + 1)
+
+
+static func use_slot(slot: int) -> void:
+	path = slot_path(slot)
 
 
 static func exists() -> bool:
 	return FileAccess.file_exists(path)
+
+
+static func slot_exists(slot: int) -> bool:
+	return FileAccess.file_exists(slot_path(slot))
+
+
+static func delete_slot(slot: int) -> void:
+	if slot_exists(slot):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(slot_path(slot)))
+
+
+## A short line for the slot menu, like "Day 4 - 230g", or "Empty".
+static func describe_slot(slot: int) -> String:
+	if not slot_exists(slot):
+		return "Empty"
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(slot_path(slot)))
+	if not data is Dictionary:
+		return "Damaged"
+	return "Day %d - %dg" % [int(data.get("day", 1)), int(data.get("money", 0))]
+
+
+## Saves from before slots existed become slot 1.
+static func migrate_old_save() -> void:
+	const OLD := "user://save.json"
+	if FileAccess.file_exists(OLD) and not slot_exists(0):
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(OLD), ProjectSettings.globalize_path(slot_path(0)))
+
+
+static func _items_to_list(items: Dictionary[ItemData, int]) -> Array:
+	var list := []
+	for item in items:
+		list.append([item.resource_path, items[item]])
+	return list
+
+
+static func _list_to_items(list: Array) -> Dictionary[ItemData, int]:
+	var items: Dictionary[ItemData, int] = {}
+	for entry: Array in list:
+		var item := load(entry[0]) as ItemData
+		if item:
+			items[item] = int(entry[1])
+	return items
 
 
 ## Writes everything to disk. main is the main scene (for the farm, animals and player).
@@ -19,23 +72,15 @@ static func save(main: Node) -> bool:
 	for i in Inventory.SIZE:
 		var stack := gs.inventory.get_slot(i)
 		slots.append([stack.item.resource_path, stack.count] if stack else null)
-	var shipping := []
-	var box := gs.get_shipping()
-	for item in box:
-		shipping.append([item.resource_path, box[item]])
-	var jobs := gs.jobs
-	var quests := []
-	for a in gs.quests.active:
-		quests.append([a.quest.resource_path, a.deadline])
+	var board := gs.quests
 	var data := {
 		"version": VERSION,
 		"day": gs.day, "minutes": gs.minutes, "money": gs.money,
 		"food": gs.food, "water": gs.water, "health": gs.health,
 		"inventory": slots, "selected": gs.inventory.selected,
-		"shipping": shipping, "seed_order": gs.get_seed_order(),
-		"jobs": {"next": jobs.next_index, "active": jobs.active.resource_path if jobs.active else "",
-			"deadline": jobs.deadline, "progress": jobs.progress, "last_result": jobs.last_result},
-		"quests": {"offers": gs.quests.offers.map(func(q: QuestData) -> String: return q.resource_path), "active": quests},
+		"shipping": _items_to_list(gs.get_shipping()), "supplies": _items_to_list(gs.get_supply_order()),
+		"quests": {"main": board.main_index, "main_handed_in": board.main_handed_in, "main_posted": board.main_posted,
+			"daily": board.daily.map(func(q: QuestData) -> String: return q.resource_path), "daily_done": board.daily_done},
 		"village": gs.village,
 		"deepest_floor": gs.deepest_floor,
 		"flags": gs.flags,
@@ -77,30 +122,24 @@ static func load_game() -> bool:
 			if item:
 				gs.inventory.put(i, Inventory.ItemStack.new(item, int(slots[i][1])))
 	gs.inventory.select(int(data.get("selected", 0)))
-	var shipping: Dictionary[ItemData, int] = {}
-	for entry: Array in data.get("shipping", []):
-		var item := load(entry[0]) as ItemData
-		if item:
-			shipping[item] = int(entry[1])
-	gs.restore_shipping(shipping, int(data.get("seed_order", 0)))
-
-	var jobs: Dictionary = data.get("jobs", {})
-	gs.jobs.next_index = int(jobs.get("next", 0))
-	gs.jobs.active = load(jobs.active) as JobData if String(jobs.get("active", "")) != "" else null
-	gs.jobs.deadline = int(jobs.get("deadline", 0))
-	gs.jobs.progress = int(jobs.get("progress", 0))
-	gs.jobs.last_result = String(jobs.get("last_result", ""))
+	gs.restore_shipping(_list_to_items(data.get("shipping", [])), _list_to_items(data.get("supplies", [])))
 
 	var quests: Dictionary = data.get("quests", {})
-	gs.quests.offers.clear()
-	for quest_path: String in quests.get("offers", []):
-		var quest := load(quest_path) as QuestData
+	var board := gs.quests
+	board.main_index = int(quests.get("main", 0))
+	board.main_handed_in = bool(quests.get("main_handed_in", false))
+	# Saves from before main quests: he has already called.
+	board.main_posted = bool(quests.get("main_posted", gs.day > 1))
+	var daily: Array[QuestData] = []
+	var done: Array[bool] = []
+	var saved_done: Array = quests.get("daily_done", [])
+	for i in quests.get("daily", []).size():
+		var quest := load(quests.daily[i]) as QuestData
 		if quest:
-			gs.quests.offers.append(quest)
-	gs.quests.active.clear()
-	for entry: Array in quests.get("active", []):
-		var quest := load(entry[0]) as QuestData
-		if quest:
-			gs.quests.active.append(QuestBoard.Active.new(quest, int(entry[1])))
+			daily.append(quest)
+			done.append(i < saved_done.size() and bool(saved_done[i]))
+	if not daily.is_empty():
+		board.daily = daily
+		board.daily_done = done
 	gs.pending_load = data.get("world", {})
 	return true

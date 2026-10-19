@@ -7,6 +7,5 @@
 script = ExtResource("2")
 item = ExtResource("1")
 amount = 15
-reward = 70
-days = 3
+reward = 30
 note = "{amount} {item} for the road.\nThe road where nobody walks. {reward}g."

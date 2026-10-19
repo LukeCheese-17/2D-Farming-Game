@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/wheat.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+kind = 0
+title = "First harvest"
+item = ExtResource("1")
+amount = 5
+reward = 200
+note = "Land's no good if nothing grows on it.\nBring {amount} {item} from your own field."

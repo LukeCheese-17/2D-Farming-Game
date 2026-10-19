@@ -29,6 +29,9 @@ func _ready() -> void:
 	if not GameState.pending_load.is_empty():
 		_apply_save_data(GameState.pending_load)
 		GameState.pending_load = {}
+	elif GameState.autosave and not SaveGame.exists():
+		# A new game takes its slot right away.
+		SaveGame.save.call_deferred(self)
 
 
 func enter_house() -> void:
