@@ -29,7 +29,8 @@ func _initialize() -> void:
 	_make_icons()
 	_make_sounds()
 	_make_player_looks()
-	_make_dead_nature()
+	_make_nature()
+	_make_human()
 	_make_houses()
 	_make_music()
 	print("Generated assets.")
@@ -173,32 +174,62 @@ func _is_inside(img: Image, x: int, y: int) -> bool:
 	return true
 
 
-# --- Dead trees and bushes (ART-3) ---
+# --- Nature (ART-3) ---
 
-## Makes nature_dead.png from "Basic Grass Biom things 1.png": trees lose their leaves
-## and bushes turn to twigs, but the apple tree stays alive. Two extra rows hold an
-## apple tree with its apples picked (tile 0,5, two by two).
-func _make_dead_nature() -> void:
+## Colours of assets/Objects/dead_tree.png, which sets the style for all nature:
+## flat two-tone wood, hanging moss, dark grass at the roots, no outlines.
+const WOOD := Color("7d5022")
+const WOOD_DARK := Color("532e26")
+const MOSS := Color("839e5c")
+const MOSS_LIGHT := Color("b6dc7f")
+const ROOT_GRASS := Color("065c00")
+
+
+## Makes nature.png, the atlas the map uses: "Basic Grass Biom things 1.png" redrawn in
+## the dead tree's style. Same tile positions, plus the picked apple tree (0,5, 2x2)
+## and the big dead tree (2,5, 3x3).
+func _make_nature() -> void:
 	var src := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Objects/Basic Grass Biom things 1.png"))
 	src.convert(Image.FORMAT_RGBA8)
-	var img := _img(src.get_width(), src.get_height() + 32)
+	var img := _img(src.get_width(), src.get_height() + 48)
 	img.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i.ZERO)
-	# Small tree, big tree: bare branches.
-	_bare_tree(img, Rect2i(0, 0, 16, 32), [Vector2(-5, -11), Vector2(5, -13), Vector2(-2, -17), Vector2(3, -7)])
-	_bare_tree(img, Rect2i(16, 0, 32, 32), [Vector2(-12, -12), Vector2(11, -15), Vector2(-6, -20), Vector2(5, -21),
-		Vector2(-9, -5), Vector2(9, -6)])
-	# Berry bush keeps its berries; the plain bush is just twigs.
-	_dead_bush(img, Rect2i(0, 48, 16, 16), true)
-	_dead_bush(img, Rect2i(16, 48, 16, 16), false)
-	# The apple tree with the apples picked off.
-	var picked := src.get_region(Rect2i(48, 0, 32, 32))
+	# Small and medium dead trees; the trunk base sits in the cell below the tile's own.
+	_clear(img, Rect2i(0, 0, 16, 32))
+	_style_tree(img, Vector2(8, 29), 18, [[0.45, Vector2(-6, -6)], [0.7, Vector2(6, -7)], [1.0, Vector2(-3, -6)], [1.0, Vector2(3, -8)]], 2)
+	_clear(img, Rect2i(16, 0, 32, 32))
+	_style_tree(img, Vector2(32, 30), 22, [[0.35, Vector2(-13, -5)], [0.5, Vector2(13, -8)], [0.7, Vector2(-9, -9)],
+		[0.85, Vector2(8, -9)], [1.0, Vector2(-3, -7)], [1.0, Vector2(4, -9)]], 3)
+	# The apple tree stays alive, with the same wood and grass.
+	_restyle_trunk(img, Rect2i(48, 0, 32, 32))
+	_grass_tufts(img, Vector2(64, 29), 4)
+	# Bushes become twigs (the berry bush keeps its berries).
+	_clear(img, Rect2i(0, 48, 32, 16))
+	_style_bush(img, Vector2(8, 62), true)
+	_style_bush(img, Vector2(24, 62), false)
+	# Stumps and the log, rocks, weeds: the same flat colours.
+	for r: Rect2i in [Rect2i(48, 32, 16, 16), Rect2i(64, 32, 16, 16), Rect2i(80, 32, 16, 16)]:
+		_recolor(img, r, [Color("a0703a"), WOOD, WOOD_DARK], 0.0)
+	for r: Rect2i in [Rect2i(112, 16, 16, 16), Rect2i(128, 16, 16, 16), Rect2i(80, 64, 16, 16), Rect2i(96, 64, 16, 16)]:
+		_recolor(img, r, [Color("9a978c"), Color("77746a"), Color("4f4c46")], 0.3)
+	for r: Rect2i in [Rect2i(80, 16, 16, 16), Rect2i(96, 16, 16, 16)]:
+		_recolor(img, r, [MOSS_LIGHT, MOSS, ROOT_GRASS], 0.0)
+	# The apple tree with its apples picked off.
+	var picked := img.get_region(Rect2i(48, 0, 32, 32))
 	for y in 32:
 		for x in 32:
 			var c := picked.get_pixel(x, y)
 			if c.a > 0.0 and _is_berry(c):
 				picked.set_pixel(x, y, _leaf_near(picked, x, y))
 	img.blit_rect(picked, Rect2i(0, 0, 32, 32), Vector2i(0, 80))
-	_save(img, "nature_dead")
+	# The big dead tree, trunk centred on the tile.
+	var tree := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Objects/dead_tree.png"))
+	tree.convert(Image.FORMAT_RGBA8)
+	img.blend_rect(tree, Rect2i(Vector2i.ZERO, tree.get_size()), Vector2i(32, 80 + 48 - tree.get_height()))
+	_save(img, "nature")
+
+
+func _clear(img: Image, rect: Rect2i) -> void:
+	img.fill_rect(rect, Color(0, 0, 0, 0))
 
 
 func _is_leaf(c: Color) -> bool:
@@ -218,65 +249,208 @@ func _leaf_near(img: Image, x: int, y: int) -> Color:
 	return Color(0.45, 0.62, 0.42)
 
 
-## Where the trunk starts, found from the brown pixels under the canopy.
-func _trunk_top(img: Image, rect: Rect2i) -> Vector2:
-	for y in range(rect.position.y, rect.end.y):
-		var xs: Array[int] = []
-		for x in range(rect.position.x, rect.end.x):
-			var c := img.get_pixel(x, y)
-			if c.a > 0.0 and c.h > 0.03 and c.h < 0.16 and c.s > 0.3 and y > rect.position.y + rect.size.y / 2:
-				xs.append(x)
-		if not xs.is_empty():
-			return Vector2((xs.front() + xs.back()) / 2.0, y)
-	return Vector2(rect.get_center())
+## A line of wood `width` pixels thick, lit on the left/top and dark on the right/bottom.
+func _branch(img: Image, from: Vector2, to: Vector2, width: int) -> void:
+	var steps := int(maxf(absf(to.x - from.x), absf(to.y - from.y))) + 1
+	var upright := absf(to.y - from.y) >= absf(to.x - from.x)
+	for i in steps + 1:
+		var p := from.lerp(to, float(i) / steps).round()
+		for w in width:
+			var color := WOOD_DARK if w == width - 1 and width > 1 else WOOD
+			if width == 1:
+				color = WOOD if i % 3 != 2 else WOOD_DARK
+			if upright:
+				_px(img, int(p.x) + w - width / 2, int(p.y), color)
+			else:
+				_px(img, int(p.x), int(p.y) + w - width / 2, color)
 
 
-func _clear_leaves(img: Image, rect: Rect2i, keep_berries: bool) -> void:
-	for y in range(rect.position.y, rect.end.y):
-		for x in range(rect.position.x, rect.end.x):
-			var c := img.get_pixel(x, y)
-			if _is_leaf(c) or (not keep_berries and _is_berry(c)):
-				img.set_pixel(x, y, Color(0, 0, 0, 0))
+## Moss hanging from a point: a dark tip and a lighter strand below.
+func _moss(img: Image, at: Vector2i, length: int) -> void:
+	for i in length:
+		_px(img, at.x, at.y + i, MOSS if i == 0 or i % 3 == 1 else MOSS_LIGHT)
 
 
-## Draws branches (outlined) onto img, plus a few dry leaves at the tips.
-func _draw_branches(img: Image, rect: Rect2i, from: Vector2, tips: Array, wood: Color) -> void:
-	var layer := _img(rect.size.x, rect.size.y)
-	var start := from - Vector2(rect.position)
+func _grass_tufts(img: Image, base: Vector2, count: int) -> void:
+	for i in count:
+		var x := int(base.x) + randi_range(-5, 5)
+		var h := randi_range(1, 3)
+		for j in h:
+			_px(img, x, int(base.y) - j + 1, ROOT_GRASS)
+
+
+## A dead tree: a tapering trunk from base up `height` pixels, and branches
+## [share of the height they leave the trunk at, offset to their tip], with moss.
+func _style_tree(img: Image, base: Vector2, height: int, branches: Array, trunk_width: int) -> void:
+	var top := base + Vector2(randf_range(-1, 1), -height)
+	_branch(img, base, base.lerp(top, 0.5), trunk_width)
+	_branch(img, base.lerp(top, 0.5), top, maxi(trunk_width - 1, 1))
+	_branch(img, base + Vector2(-1, 0), base + Vector2(-3, 1), 1)
+	_branch(img, base + Vector2(1, 0), base + Vector2(3, 1), 1)
+	for b: Array in branches:
+		var start := base.lerp(top, b[0])
+		var tip: Vector2 = start + b[1]
+		var bend := start.lerp(tip, 0.5) + Vector2(0, randf_range(-1.5, 0.5))
+		_branch(img, start, bend, 2 if b[1].length() > 6.0 else 1)
+		_branch(img, bend, tip, 1)
+		_branch(img, tip, tip + Vector2(signf(b[1].x), -2), 1)
+		if randf() < 0.7:
+			_moss(img, Vector2i(bend.round()) + Vector2i(0, 1), randi_range(2, 5))
+	_grass_tufts(img, base, 5)
+
+
+func _style_bush(img: Image, base: Vector2, berries: bool) -> void:
+	var tips := [Vector2(-6, -7), Vector2(5, -8), Vector2(-2, -11), Vector2(2, -6), Vector2(-5, -3), Vector2(6, -3)]
 	for tip: Vector2 in tips:
-		var end := (start + tip).clamp(Vector2(1, 1), Vector2(rect.size) - Vector2(2, 2))
-		var bend := start.lerp(end, 0.5) + Vector2(randf_range(-1.5, 1.5), randf_range(-1, 1))
-		_line(layer, start, bend, wood)
-		_line(layer, bend, end, wood)
-		if tip.length() > 10.0:
-			_line(layer, start + Vector2(1, 0), bend + Vector2(1, 0), wood)
-		if randf() < 0.6:
-			_px(layer, roundi(end.x), roundi(end.y) - 1, Color(0.55, 0.47, 0.33))
-	_outline(layer, Color(0.22, 0.16, 0.14))
-	img.blend_rect(layer, Rect2i(Vector2i.ZERO, rect.size), rect.position)
+		_branch(img, base, base + tip, 1)
+		if berries and randf() < 0.8:
+			_px(img, int(base.x + tip.x), int(base.y + tip.y) + 1, Color("b8323a"))
+			_px(img, int(base.x + tip.x) + 1, int(base.y + tip.y) + 1, Color("7a1f2a"))
+	_moss(img, Vector2i(base + Vector2(-3, -5)), 3)
+	_grass_tufts(img, base + Vector2(0, 1), 3)
 
 
-func _bare_tree(img: Image, rect: Rect2i, tips: Array) -> void:
-	var top := _trunk_top(img, rect)
-	var wood := img.get_pixelv(Vector2i(top) + Vector2i(0, 2))
-	_clear_leaves(img, rect, false)
-	_draw_branches(img, rect, top + Vector2(0, 1), tips, wood.darkened(0.1))
+## Brown trunk pixels become the style's two wood colours.
+func _restyle_trunk(img: Image, rect: Rect2i) -> void:
+	for y in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			var c := img.get_pixel(x, y)
+			if c.a > 0.0 and c.h > 0.03 and c.h < 0.16 and c.s > 0.3:
+				img.set_pixel(x, y, WOOD if c.v > 0.55 else WOOD_DARK)
 
 
-func _dead_bush(img: Image, rect: Rect2i, keep_berries: bool) -> void:
-	_clear_leaves(img, rect, keep_berries)
-	var base := Vector2(rect.position) + Vector2(rect.size.x / 2.0, rect.size.y - 3.0)
-	_draw_branches(img, rect, base, [Vector2(-6, -7), Vector2(5, -8), Vector2(-2, -10), Vector2(2, -6), Vector2(-4, -3), Vector2(6, -3)],
-		Color(0.48, 0.38, 0.28))
-	if keep_berries:
-		# Put the berries back on top of the twigs.
-		var src := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Objects/Basic Grass Biom things 1.png"))
-		src.convert(Image.FORMAT_RGBA8)
+## Flattens a sprite to three colours (light, mid, dark) by brightness, drops the pale
+## halo, and with moss > 0 puts moss on some top edges.
+func _recolor(img: Image, rect: Rect2i, colors: Array, moss: float) -> void:
+	for y in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			var c := img.get_pixel(x, y)
+			if c.a == 0.0:
+				continue
+			if c.s < 0.15 and c.v > 0.85:
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+				continue
+			var l := c.get_luminance()
+			img.set_pixel(x, y, colors[0] if l > 0.6 else (colors[1] if l > 0.35 else colors[2]))
+	if moss <= 0.0:
+		return
+	for x in range(rect.position.x, rect.end.x):
 		for y in range(rect.position.y, rect.end.y):
-			for x in range(rect.position.x, rect.end.x):
-				if _is_berry(src.get_pixel(x, y)):
-					img.set_pixel(x, y, src.get_pixel(x, y))
+			if img.get_pixel(x, y).a > 0.0:
+				if randf() < moss:
+					img.set_pixel(x, y, MOSS if randf() < 0.5 else MOSS_LIGHT)
+				break
 
+
+# --- Human look (ART-1) ---
+
+## Drawn over the cat's frames: same feet position, and the cat's tools and paws
+## (as hands) are kept on top so every action still lines up.
+const HUMAN_COLORS := {"o": "2b2232", "h": "5a3a2a", "H": "7a5238", "s": "f1c7a0", "S": "d9a47e",
+	"e": "2b2232", "w": "e8dcc0", "b": "4c6a8c", "B": "3a5270", "k": "4a3426"}
+const HUMAN_FRONT: Array[String] = ["...oooooo...", "..ohhhhhho..", ".ohhHHhhhho.", ".ohhhhhhhho.",
+	".ohssssssho.", ".osesssseso.", ".ossssssSso.", "..osssssso..", "..oowbbwoo..", ".oswbbbbwso.",
+	".oswbbbbwso.", ".osobbbboso.", "..oobbbboo..", "...obbBbo..."]
+const HUMAN_BACK: Array[String] = ["...oooooo...", "..ohhhhhho..", ".ohhHHhhhho.", ".ohhhhhhhho.",
+	".ohhhhhhhho.", ".ohhhhhhhho.", ".ohhhhhhHho.", "..ohhhhhho..", "..oowbbwoo..", ".oswbbbbwso.",
+	".oswbbbbwso.", ".osobbbboso.", "..oobbbboo..", "...obbBbo..."]
+const HUMAN_SIDE: Array[String] = ["...ooooo....", "..ohhhhho...", ".ohhhHhhho..", ".ohhhhhhso..",
+	".ohhhsssso..", ".ohhsssseo..", ".ohhsssssso.", "..ohsssSso..", "...owwbwo...", "...owsbbo...",
+	"...owsbbo...", "...oosbbo...", "...obbbbo...", "....obbo...."]
+const HUMAN_LEGS := {
+	"stand": ["...obbobbo..", "...obbobbo..", "...okkokko..", "...ooooooo.."],
+	"step_l": ["...obbobbo..", "...okkobbo..", "...ooookko..", "......oooo.."],
+	"step_r": ["...obbobbo..", "...obbokko..", "...okkoooo..", "...oooo....."],
+	"side": ["....obbo....", "....obbo....", "....okkko...", "....ooooo..."],
+	"side_step": ["...obbbbo...", "..obo..obo..", "..oko..okko.", "..ooo..oooo."],
+}
+const CAT_COLORS: Array[String] = ["F3F2C0", "5C4E92", "DDD5DE", "766DAA", "E8B5AC", "F3D8C5", "EAE178"]
+
+
+func _make_human() -> void:
+	var sheets := {"sheet": "Basic Charakter Spritesheet.png", "actions": "Basic Charakter Actions.png"}
+	for kind: String in sheets:
+		var src := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Characters/" + sheets[kind]))
+		src.convert(Image.FORMAT_RGBA8)
+		var out := _img(src.get_width(), src.get_height())
+		for row in src.get_height() / 48:
+			for col in src.get_width() / 48:
+				var frame := src.get_region(Rect2i(col * 48, row * 48, 48, 48))
+				var legs := "stand"
+				if kind == "sheet" and col >= 2:
+					legs = ("step_l" if col == 2 else "step_r")
+				out.blit_rect(_human_frame(frame, ["front", "back", "left", "right"][row % 4], legs),
+					Rect2i(0, 0, 48, 48), Vector2i(col * 48, row * 48))
+		_save(out, "player_human_" + kind)
+
+
+func _human_frame(cat: Image, facing: String, legs: String) -> Image:
+	# Split the cat's pixels into connected blobs: the biggest is the body, the rest are paws.
+	var blob := {}
+	var blobs: Array = []
+	for y in 48:
+		for x in 48:
+			if blob.has(Vector2i(x, y)) or not _is_cat(cat.get_pixel(x, y)):
+				continue
+			var cells: Array[Vector2i] = []
+			var queue: Array[Vector2i] = [Vector2i(x, y)]
+			blob[Vector2i(x, y)] = blobs.size()
+			while not queue.is_empty():
+				var c: Vector2i = queue.pop_back()
+				cells.append(c)
+				for ox in range(-1, 2):
+					for oy in range(-1, 2):
+						var n := c + Vector2i(ox, oy)
+						if n.x >= 0 and n.y >= 0 and n.x < 48 and n.y < 48 and not blob.has(n) and _is_cat(cat.get_pixelv(n)):
+							blob[n] = blobs.size()
+							queue.append(n)
+			blobs.append(cells)
+	var body: Array = []
+	for cells: Array in blobs:
+		if cells.size() > body.size():
+			body = cells
+	var out := _img(48, 48)
+	if body.is_empty():
+		return out
+	var left := 48
+	var right := 0
+	var bottom := 0
+	for c: Vector2i in body:
+		left = mini(left, c.x)
+		right = maxi(right, c.x)
+		bottom = maxi(bottom, c.y)
+	var side := facing == "left" or facing == "right"
+	var top_rows: Array[String] = HUMAN_SIDE if side else (HUMAN_BACK if facing == "back" else HUMAN_FRONT)
+	var leg_rows: Array = HUMAN_LEGS["side_step" if legs != "stand" else "side"] if side else HUMAN_LEGS[legs]
+	var rows: Array[String] = []
+	rows.append_array(top_rows)
+	for r: String in leg_rows:
+		rows.append(r)
+	var x0 := (left + right + 1) / 2 - 6
+	var y0 := bottom + 1 - rows.size()
+	for y in rows.size():
+		var line: String = rows[y]
+		if facing == "left":
+			line = line.reverse()
+		for x in line.length():
+			if line[x] != ".":
+				_px(out, x0 + x, y0 + y, Color(HUMAN_COLORS[line[x]]))
+	# The cat's tools on top, and its loose paws as hands.
+	for y in 48:
+		for x in 48:
+			var c := cat.get_pixel(x, y)
+			if c.a == 0.0:
+				continue
+			if not _is_cat(c):
+				out.set_pixel(x, y, c)
+			elif blobs[blob[Vector2i(x, y)]] != body:
+				var key := c.to_html(false).to_upper()
+				out.set_pixel(x, y, Color(HUMAN_COLORS["o"] if key == "5C4E92" else HUMAN_COLORS["s"]))
+	return out
+
+
+func _is_cat(c: Color) -> bool:
+	return c.a > 0.0 and c.to_html(false).to_upper() in CAT_COLORS
 
 # --- Houses (ART-2) ---
 

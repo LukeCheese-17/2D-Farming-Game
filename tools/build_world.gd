@@ -24,6 +24,7 @@ const BRIDGE_SOURCE := 7
 const BIG_TREE := Vector2i(1, 0)
 const APPLE_TREE := Vector2i(3, 0)
 const SMALL_TREE := Vector2i(0, 0)
+const HUGE_TREE := Vector2i(2, 5)
 const BERRY_BUSH := Vector2i(0, 3)
 const BUSH := Vector2i(1, 3)
 const ROCKS: Array[Vector2i] = [Vector2i(7, 1), Vector2i(8, 1), Vector2i(5, 4), Vector2i(6, 4)]
@@ -188,10 +189,10 @@ func _try_tree(layer: TileMapLayer, cell: Vector2i) -> void:
 	if randf() >= _tree_density(cell):
 		return
 	var roll := randf()
-	var tile := APPLE_TREE if roll < 0.06 else (SMALL_TREE if roll < 0.3 else BIG_TREE)
+	var tile := APPLE_TREE if roll < 0.06 else (SMALL_TREE if roll < 0.3 else (HUGE_TREE if roll < 0.5 else BIG_TREE))
 	# Woods trees may stand close together; elsewhere they keep their distance.
 	var dense := cell.y < 27 or cell.x > 92
-	_place(layer, cell, tile, 0 if dense or tile == SMALL_TREE else 1)
+	_place(layer, cell, tile, 1 if tile == HUGE_TREE or not (dense or tile == SMALL_TREE) else 0)
 
 
 func _take(cell: Vector2i, radius: int) -> void:

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://sfasfd4ya1rc"
-path="res://.godot/imported/nature_dead.png-2b07b87fb44ba29c35984b473b92538c.ctex"
+uid="uid://ddg30nrcjupgd"
+path="res://.godot/imported/player_human_actions.png-7bb7879a367d3c21d729717c6ba0e1e5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Generated/nature_dead.png"
-dest_files=["res://.godot/imported/nature_dead.png-2b07b87fb44ba29c35984b473b92538c.ctex"]
+source_file="res://assets/Generated/player_human_actions.png"
+dest_files=["res://.godot/imported/player_human_actions.png-7bb7879a367d3c21d729717c6ba0e1e5.ctex"]
 
 [params]
 

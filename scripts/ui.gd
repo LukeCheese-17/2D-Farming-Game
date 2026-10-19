@@ -24,7 +24,7 @@ signal look_changed(look: String)
 
 const OPTIONS_PATH := "user://options.cfg"
 ## Player looks (ART-1). "default" is the original sheet; the others are in assets/Generated.
-const LOOKS: Array[String] = ["default", "updated", "halloween", "black"]
+const LOOKS: Array[String] = ["default", "updated", "halloween", "black", "human"]
 
 var in_dialogue := false
 var in_menu := false

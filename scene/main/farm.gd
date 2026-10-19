@@ -14,8 +14,10 @@ const DIRT_TERRAIN := 1
 const CROP_OFFSET := Vector2(0, 6)
 const NATURE_SOURCE := 4
 
-# Tiles in assets/Generated/nature_dead.png ("Basic Grass Biom things 1.png" with dead trees).
+# Tiles in assets/Generated/nature.png ("Basic Grass Biom things 1.png" redrawn in the dead tree style).
 const BIG_TREE := Vector2i(1, 0)
+## The big dead tree, three tiles square (assets/Objects/dead_tree.png).
+const HUGE_TREE := Vector2i(2, 5)
 const APPLE_TREE := Vector2i(3, 0)
 ## An apple tree with its apples picked; it stays alive (ART-3).
 const PICKED_APPLE_TREE := Vector2i(0, 5)
@@ -41,7 +43,7 @@ const WILD_FLOWERS := {
 	Vector2i(5, 3): preload("res://data/items/cornflower.tres"),
 }
 ## Trees drawn two tiles tall: their trunk stands in the cell below the tile (TOL-4).
-const TALL_TREES: Array[Vector2i] = [BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE, SMALL_TREE]
+const TALL_TREES: Array[Vector2i] = [HUGE_TREE, BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE, SMALL_TREE]
 ## Walking on a path is quicker than on grass (MOV-7).
 const PATH_SPEED := 1.3
 
@@ -204,7 +206,7 @@ func can_collect(cell: Vector2i) -> bool:
 
 
 func is_tree(tile: Vector2i) -> bool:
-	return tile in [BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE, SMALL_TREE, SMALL_STUMP, BIG_STUMP, LOG]
+	return tile in [HUGE_TREE, BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE, SMALL_TREE, SMALL_STUMP, BIG_STUMP, LOG]
 
 
 func is_rock(tile: Vector2i) -> bool:
@@ -343,8 +345,8 @@ func _chop(target: Vector2i, axe: ItemData) -> void:
 			_give(WOOD, 2)
 			nature_layer.erase_cell(cell)
 			nature_layer.set_cell(cell + Vector2i.DOWN, NATURE_SOURCE, SMALL_STUMP)
-		BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE:
-			_give(WOOD, 4)
+		HUGE_TREE, BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE:
+			_give(WOOD, 6 if tile == HUGE_TREE else 4)
 			_regrow.erase(cell)
 			nature_layer.erase_cell(cell)
 			nature_layer.set_cell(cell + Vector2i.DOWN, NATURE_SOURCE, BIG_STUMP)
