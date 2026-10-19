@@ -18,6 +18,8 @@ enum Kind { ITEMS, BUILDING, MINE_FLOOR }
 ## For MINE_FLOOR: the mine floor that has to be reached (1 = the top floor).
 @export var mine_floor := 1
 @export var reward := 30
+## The mine opens once this main quest goes up on the board (MIN-5).
+@export var unlocks_mine := false
 ## What the note says. {amount}, {item} and {reward} are filled in.
 @export_multiline var note := ""
 

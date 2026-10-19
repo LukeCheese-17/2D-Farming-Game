@@ -46,6 +46,9 @@ var _menu_list := VBoxContainer.new()
 var _menu_footer := Label.new()
 var _menu_options: Array[String] = []
 var _menu_index := 0
+var _text_box := PanelContainer.new()
+var _text_title := Label.new()
+var _text_edit := LineEdit.new()
 var _ui_move := AudioStreamPlayer.new()
 var _ui_select := AudioStreamPlayer.new()
 
@@ -58,6 +61,7 @@ func _ready() -> void:
 	_build_status()
 	_build_meters()
 	_build_menu()
+	_build_text_box()
 	_build_slots()
 	_ui_move.stream = preload("res://assets/Generated/ui_move.wav")
 	_ui_select.stream = preload("res://assets/Generated/ui_select.wav")
@@ -84,6 +88,10 @@ func _ready() -> void:
 	UI.menu_started.connect(_on_menu_started)
 	UI.menu_finished.connect(_on_menu_finished)
 	UI.backpack_toggled.connect(_on_backpack_toggled)
+	UI.text_started.connect(_on_text_started)
+	UI.text_finished.connect(func(_text: String) -> void:
+		_text_box.hide()
+		_set_hotbar_visible(true))
 	UI.fishing_started.connect(_on_fishing_started)
 	_fishing_ring.finished.connect(UI.end_fishing)
 	_prompt_label.text = ""
@@ -92,6 +100,7 @@ func _ready() -> void:
 	_backpack.hide()
 	_held_icon.hide()
 	_menu.hide()
+	_text_box.hide()
 	_refresh_clock()
 	_refresh_money()
 	_refresh_main()
@@ -106,7 +115,11 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _menu.visible:
+	if _text_box.visible:
+		if event.is_action_pressed("ui_cancel"):
+			get_viewport().set_input_as_handled()
+			UI.end_text()
+	elif _menu.visible:
 		_handle_menu_input(event)
 	elif _dialogue_box.visible:
 		_handle_dialogue_input(event)
@@ -199,7 +212,7 @@ func _refresh_main() -> void:
 	if quest == null:
 		return
 	if board.is_main_done():
-		_main_label.text = "Main: %s - done. Call him." % quest.title
+		_main_label.text = "Main: %s - done. Call %s." % [quest.title, GameState.get_caller()]
 	elif quest.kind == QuestData.Kind.ITEMS:
 		_main_label.text = "Main: %s - %d/%d %s to the board (%dg)" % [quest.title,
 			mini(_inventory.count(quest.item), quest.amount), quest.amount, quest.item.display_name, quest.reward]
@@ -446,3 +459,39 @@ func _handle_menu_input(event: InputEvent) -> void:
 	else:
 		return
 	get_viewport().set_input_as_handled()
+
+
+# --- Text box ---
+
+func _build_text_box() -> void:
+	_text_box.add_theme_stylebox_override("panel", UITheme.panel(0.94))
+	_text_box.custom_minimum_size = Vector2(220, 0)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	_text_title.add_theme_color_override("font_color", UITheme.ACCENT)
+	box.add_child(_text_title)
+	_text_edit.max_length = 16
+	_text_edit.text_submitted.connect(func(text: String) -> void: UI.end_text(text))
+	_text_edit.gui_input.connect(func(event: InputEvent) -> void:
+		if event.is_action_pressed("ui_cancel") and _text_box.visible:
+			_text_edit.accept_event()
+			UI.end_text())
+	box.add_child(_text_edit)
+	var hint := Label.new()
+	hint.text = "Type, then Enter.   Esc: never mind"
+	hint.add_theme_font_size_override("font_size", 8)
+	hint.add_theme_color_override("font_color", UITheme.DIM_TEXT)
+	box.add_child(hint)
+	_text_box.add_child(box)
+	_root.add_child(_text_box)
+
+
+func _on_text_started(title: String, text: String) -> void:
+	_text_title.text = title
+	_text_edit.text = text
+	_set_hotbar_visible(false)
+	_text_box.show()
+	await get_tree().process_frame
+	_text_box.position = ((_root.size - _text_box.size) / 2.0).round() - Vector2(0, 20)
+	_text_edit.grab_focus()
+	_text_edit.caret_column = text.length()

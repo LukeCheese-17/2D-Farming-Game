@@ -62,6 +62,16 @@ func get_main() -> QuestData:
 	return main_quests[main_index]
 
 
+## The mine opens when the main quest that unlocks it goes up (or once the player has been down).
+func is_mine_unlocked() -> bool:
+	if not main_posted:
+		return false
+	for i in mini(main_index + 1, main_quests.size()):
+		if main_quests[i].unlocks_mine:
+			return true
+	return false
+
+
 ## Whether the current main quest is finished and waiting for the man to pay.
 func is_main_done() -> bool:
 	var quest := get_main()

@@ -24,6 +24,14 @@ const SWORD := preload("res://data/items/rusty_sword.tres")
 const INTERACT := preload("res://scripts/interact_area.gd")
 const ENEMY := preload("res://scene/mine/enemy.gd")
 const DIRECTIONS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+## Seconds between creepy cues on the top floor; deeper floors divide this (MIN-6).
+const CUE_GAP := Vector2(35.0, 70.0)
+const CUE_DEPTH_FACTOR := 0.6
+const DEEP_MESSAGES: Array[String] = [
+	"Something whispered your name.",
+	"Far above, someone laughs. Then nothing.",
+	"For a moment the dark looks like it's breathing.",
+]
 
 @export var player: Player
 
@@ -40,6 +48,9 @@ var _ground := TileMapLayer.new()
 var _walls := TileMapLayer.new()
 var _objects := Node2D.new()
 var _drone := AudioStreamPlayer.new()
+var _cue_sound := AudioStreamPlayer2D.new()
+var _torches: Array[Sprite2D] = []
+var _next_cue := 0.0
 
 
 func _ready() -> void:
@@ -54,6 +65,8 @@ func _ready() -> void:
 	_drone.stream = preload("res://assets/Generated/mine_drone.wav")
 	_drone.volume_db = -14.0
 	add_child(_drone)
+	_cue_sound.max_distance = 400.0
+	add_child(_cue_sound)
 
 
 func world_to_cell(world_position: Vector2) -> Vector2i:
@@ -115,6 +128,7 @@ func enter_floor(index: int) -> void:
 	if not _drone.playing:
 		_drone.play()
 	_drone.pitch_scale = 1.0 - index * 0.06
+	_next_cue = randf_range(CUE_GAP.x, CUE_GAP.y) * 0.5 / (1.0 + index * CUE_DEPTH_FACTOR)
 
 
 ## Clears the floor when the player leaves.
@@ -126,6 +140,87 @@ func leave() -> void:
 
 func is_last_floor() -> bool:
 	return floor_index == GameState.mine_floors.size() - 1
+
+
+# --- The deeper, the creepier (MIN-6) ---
+
+func _process(delta: float) -> void:
+	if floor_index < 0 or UI.is_blocking():
+		return
+	_next_cue -= delta
+	if _next_cue > 0.0:
+		return
+	_next_cue = randf_range(CUE_GAP.x, CUE_GAP.y) / (1.0 + floor_index * CUE_DEPTH_FACTOR)
+	var cues: Array[Callable] = [_cue_rockfall]
+	if floor_index >= 1:
+		cues.append(_cue_steps)
+	if floor_index >= 2:
+		cues.append_array([_cue_whisper, _cue_torch_out])
+	if floor_index >= 3:
+		cues.append_array([_cue_far_phone, _cue_drone_stops])
+	if floor_index >= 4:
+		cues.append(_cue_message)
+	cues.pick_random().call()
+
+
+func _play_cue_sound(stream: AudioStream, offset: Vector2, pitch := 1.0) -> void:
+	_cue_sound.stream = stream
+	_cue_sound.global_position = player.global_position + offset
+	_cue_sound.pitch_scale = pitch
+	_cue_sound.play()
+
+
+func _random_offset(distance: float) -> Vector2:
+	return Vector2.RIGHT.rotated(randf() * TAU) * distance
+
+
+## Stones trickling down somewhere in the dark.
+func _cue_rockfall() -> void:
+	_play_cue_sound(preload("res://assets/Generated/pick.wav"), _random_offset(160.0), 0.35)
+
+
+## Footsteps behind the player that stop when they turn around.
+func _cue_steps() -> void:
+	var on_floor := floor_index
+	for i in 4:
+		if floor_index != on_floor:
+			return
+		_play_cue_sound(preload("res://assets/Generated/step.wav"), -player.facing * 36.0, randf_range(0.65, 0.75))
+		await get_tree().create_timer(0.45).timeout
+
+
+func _cue_whisper() -> void:
+	_play_cue_sound(preload("res://assets/Generated/whisper.wav"), _random_offset(50.0), randf_range(0.8, 1.0))
+
+
+## A torch gutters down to almost nothing and stays that way.
+func _cue_torch_out() -> void:
+	var lit := _torches.filter(func(torch: Sprite2D) -> bool: return is_instance_valid(torch) and torch.modulate.a > 0.5)
+	if lit.is_empty():
+		_cue_whisper()
+		return
+	create_tween().tween_property(lit.pick_random(), "modulate:a", 0.15, 1.5)
+
+
+## A telephone rings twice, very far away.
+func _cue_far_phone() -> void:
+	var on_floor := floor_index
+	_play_cue_sound(preload("res://assets/Generated/phone_ring.wav"), _random_offset(300.0), 0.9)
+	await get_tree().create_timer(2.5).timeout
+	if floor_index == on_floor:
+		_cue_sound.stop()
+
+
+## The low hum of the mine stops for a few seconds, as if something is listening.
+func _cue_drone_stops() -> void:
+	_drone.stream_paused = true
+	await get_tree().create_timer(randf_range(3.0, 5.0)).timeout
+	_drone.stream_paused = false
+
+
+func _cue_message() -> void:
+	_cue_whisper()
+	UI.post_message(DEEP_MESSAGES.pick_random())
 
 
 # --- Building a floor ---
@@ -155,6 +250,7 @@ func _clear() -> void:
 	_walls.clear()
 	_open.clear()
 	_rocks.clear()
+	_torches.clear()
 	for child in _objects.get_children():
 		child.queue_free()
 
@@ -205,6 +301,7 @@ func _generate() -> void:
 			sprite.texture = TORCH
 			sprite.position = cell_to_world(torch_cells.pick_random()) - global_position
 			_objects.add_child(sprite)
+			_torches.append(sprite)
 	var spawn_cells := cells.filter(func(c: Vector2i) -> bool: return distances[c] >= 10 and not _rocks.has(c))
 	for i in mini(floor_data.enemy_count, spawn_cells.size()):
 		_add_enemy(spawn_cells[i])

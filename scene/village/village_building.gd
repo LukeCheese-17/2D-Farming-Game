@@ -4,9 +4,7 @@ extends StaticBody2D
 ## hand in its materials; it's finished overnight and then opens its shop.
 ## Without data it's a house that stays boarded up.
 
-const ROOF := preload("res://assets/Tilesets/Wooden_House_Roof_Tilset.png")
-const WALLS := preload("res://assets/Tilesets/Wooden_House_Walls_Tilset.png")
-const DOORS := preload("res://assets/Tilesets/Doors.png")
+const HOUSE := preload("res://assets/Generated/house_village.png")
 const SCAFFOLD := preload("res://assets/Generated/scaffold.png")
 const RUBBLE := preload("res://assets/Generated/rubble.png")
 const SIGNPOST := preload("res://assets/Generated/signpost.png")
@@ -33,16 +31,6 @@ func get_state() -> String:
 	return GameState.get_building_state(data.id) if data else "ruin"
 
 
-func _sprite(parent: Node, texture: Texture2D, region: Rect2, at: Vector2) -> Sprite2D:
-	var sprite := Sprite2D.new()
-	var atlas := AtlasTexture.new()
-	atlas.atlas = texture
-	atlas.region = region
-	sprite.texture = atlas
-	sprite.position = at
-	parent.add_child(sprite)
-	return sprite
-
 
 func _rect(parent: Node, rect: Rect2, color: Color) -> void:
 	var shape := ColorRect.new()
@@ -61,16 +49,13 @@ func _board(parent: Node, from: Vector2, to: Vector2) -> void:
 	parent.add_child(line)
 
 
-## Same pieces as the farmhouse (house_exterior.tscn), plus the ruined parts on top.
+## The same shape as the farmhouse (house_exterior.tscn), plus the ruined parts on top.
 func _build() -> void:
 	add_child(_building)
-	_sprite(_building, WALLS, Rect2(48, 16, 32, 16), Vector2(-16, -24))
-	_sprite(_building, WALLS, Rect2(48, 16, 32, 16), Vector2(16, -24))
-	_sprite(_building, WALLS, Rect2(48, 32, 16, 16), Vector2(-24, -8))
-	_sprite(_building, WALLS, Rect2(48, 16, 16, 16), Vector2(-8, -8))
-	_sprite(_building, DOORS, Rect2(0, 16, 16, 16), Vector2(8, -8))
-	_sprite(_building, WALLS, Rect2(48, 16, 16, 16), Vector2(24, -8))
-	_sprite(_building, ROOF, Rect2(48, 32, 64, 48), Vector2(0, -56))
+	var house := Sprite2D.new()
+	house.texture = HOUSE
+	house.position = Vector2(0, -40)
+	_building.add_child(house)
 
 	add_child(_ruin)
 	# Holes in the roof, a dark window, boarded door and window, rubble.

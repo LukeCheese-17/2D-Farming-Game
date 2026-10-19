@@ -2,7 +2,7 @@ extends SceneTree
 ## Draws the placeholder art and sounds in assets/Generated/ (fish, crops, ores,
 ## tools, mine tiles, enemies, props, UI icons, sound effects). Run from the project folder:
 ##   godot --headless --path . -s tools/generate_assets.gd
-## then re-import. Replace any of the files with real art when it exists.
+## then re-import. The music loop takes a little while. Replace any of the files with real art when it exists.
 
 const OUT := "res://assets/Generated/"
 const INK := Color(0.17, 0.12, 0.17)
@@ -28,6 +28,10 @@ func _initialize() -> void:
 	_make_props()
 	_make_icons()
 	_make_sounds()
+	_make_player_looks()
+	_make_dead_nature()
+	_make_houses()
+	_make_music()
 	print("Generated assets.")
 	quit()
 
@@ -117,6 +121,224 @@ func _tint_metal(img: Image, tint: Color) -> Image:
 			if c.a > 0.0 and c.s < 0.22 and c.v > 0.3 and c.v < 0.92:
 				out.set_pixel(x, y, Color(tint.r * c.v * 1.35, tint.g * c.v * 1.35, tint.b * c.v * 1.35, c.a))
 	return out
+
+
+# --- Player looks (ART-1) ---
+
+## Original colour -> new colour for each look. The outline colour is also used for
+## the eyes; with "glow_eyes" the eyes get their own colour.
+const LOOKS := {
+	"updated": {"F3F2C0": "F6EBC8", "5C4E92": "3B2F4F", "DDD5DE": "E2C29C", "766DAA": "8C3B3B",
+		"E8B5AC": "F09A9A", "F3D8C5": "F7D5B5", "EAE178": "F2C14E"},
+	"halloween": {"F3F2C0": "E8892E", "5C4E92": "2E1A33", "DDD5DE": "3A2A40", "766DAA": "7A3FA0",
+		"E8B5AC": "C2410C", "F3D8C5": "F0A050", "EAE178": "9BE564"},
+	"black": {"F3F2C0": "34303D", "5C4E92": "120F17", "DDD5DE": "4A4458", "766DAA": "8C1F2E",
+		"E8B5AC": "6B4E5E", "F3D8C5": "4A4458", "EAE178": "EAE178", "glow_eyes": "EAE178"},
+}
+
+
+func _make_player_looks() -> void:
+	var sheets := {"sheet": "Basic Charakter Spritesheet.png", "actions": "Basic Charakter Actions.png"}
+	for kind: String in sheets:
+		var src := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Characters/" + sheets[kind]))
+		src.convert(Image.FORMAT_RGBA8)
+		for look: String in LOOKS:
+			var palette: Dictionary = LOOKS[look]
+			var img := src.duplicate() as Image
+			for y in img.get_height():
+				for x in img.get_width():
+					var c := src.get_pixel(x, y)
+					if c.a == 0.0:
+						continue
+					var key := c.to_html(false).to_upper()
+					if not palette.has(key):
+						continue
+					var color := Color(palette[key])
+					if key == "5C4E92" and palette.has("glow_eyes") and _is_inside(src, x, y):
+						color = Color(palette.glow_eyes)
+					img.set_pixel(x, y, Color(color, c.a))
+			_save(img, "player_%s_%s" % [look, kind])
+
+
+## True if (x, y) sits inside the face (an eye) rather than on the outline: drawn
+## above and below, with fur (not outline) on both sides.
+func _is_inside(img: Image, x: int, y: int) -> bool:
+	for o: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		var p := Vector2i(x, y) + o
+		if p.x < 0 or p.y < 0 or p.x >= img.get_width() or p.y >= img.get_height():
+			return false
+		var c := img.get_pixelv(p)
+		if c.a == 0.0 or (o.y == 0 and c.to_html(false).to_upper() == "5C4E92"):
+			return false
+	return true
+
+
+# --- Dead trees and bushes (ART-3) ---
+
+## Makes nature_dead.png from "Basic Grass Biom things 1.png": trees lose their leaves
+## and bushes turn to twigs, but the apple tree stays alive. Two extra rows hold an
+## apple tree with its apples picked (tile 0,5, two by two).
+func _make_dead_nature() -> void:
+	var src := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Objects/Basic Grass Biom things 1.png"))
+	src.convert(Image.FORMAT_RGBA8)
+	var img := _img(src.get_width(), src.get_height() + 32)
+	img.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i.ZERO)
+	# Small tree, big tree: bare branches.
+	_bare_tree(img, Rect2i(0, 0, 16, 32), [Vector2(-5, -11), Vector2(5, -13), Vector2(-2, -17), Vector2(3, -7)])
+	_bare_tree(img, Rect2i(16, 0, 32, 32), [Vector2(-12, -12), Vector2(11, -15), Vector2(-6, -20), Vector2(5, -21),
+		Vector2(-9, -5), Vector2(9, -6)])
+	# Berry bush keeps its berries; the plain bush is just twigs.
+	_dead_bush(img, Rect2i(0, 48, 16, 16), true)
+	_dead_bush(img, Rect2i(16, 48, 16, 16), false)
+	# The apple tree with the apples picked off.
+	var picked := src.get_region(Rect2i(48, 0, 32, 32))
+	for y in 32:
+		for x in 32:
+			var c := picked.get_pixel(x, y)
+			if c.a > 0.0 and _is_berry(c):
+				picked.set_pixel(x, y, _leaf_near(picked, x, y))
+	img.blit_rect(picked, Rect2i(0, 0, 32, 32), Vector2i(0, 80))
+	_save(img, "nature_dead")
+
+
+func _is_leaf(c: Color) -> bool:
+	return c.a > 0.0 and c.h > 0.18 and c.h < 0.5 and c.s > 0.12
+
+
+func _is_berry(c: Color) -> bool:
+	return c.a > 0.0 and (c.h < 0.04 or c.h > 0.9) and c.s > 0.35
+
+
+## The colour of the nearest leaf pixel on the same row, to paint over a picked apple.
+func _leaf_near(img: Image, x: int, y: int) -> Color:
+	for d in range(1, 8):
+		for xx: int in [x - d, x + d]:
+			if xx >= 0 and xx < img.get_width() and _is_leaf(img.get_pixel(xx, y)):
+				return img.get_pixel(xx, y)
+	return Color(0.45, 0.62, 0.42)
+
+
+## Where the trunk starts, found from the brown pixels under the canopy.
+func _trunk_top(img: Image, rect: Rect2i) -> Vector2:
+	for y in range(rect.position.y, rect.end.y):
+		var xs: Array[int] = []
+		for x in range(rect.position.x, rect.end.x):
+			var c := img.get_pixel(x, y)
+			if c.a > 0.0 and c.h > 0.03 and c.h < 0.16 and c.s > 0.3 and y > rect.position.y + rect.size.y / 2:
+				xs.append(x)
+		if not xs.is_empty():
+			return Vector2((xs.front() + xs.back()) / 2.0, y)
+	return Vector2(rect.get_center())
+
+
+func _clear_leaves(img: Image, rect: Rect2i, keep_berries: bool) -> void:
+	for y in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			var c := img.get_pixel(x, y)
+			if _is_leaf(c) or (not keep_berries and _is_berry(c)):
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+
+
+## Draws branches (outlined) onto img, plus a few dry leaves at the tips.
+func _draw_branches(img: Image, rect: Rect2i, from: Vector2, tips: Array, wood: Color) -> void:
+	var layer := _img(rect.size.x, rect.size.y)
+	var start := from - Vector2(rect.position)
+	for tip: Vector2 in tips:
+		var end := (start + tip).clamp(Vector2(1, 1), Vector2(rect.size) - Vector2(2, 2))
+		var bend := start.lerp(end, 0.5) + Vector2(randf_range(-1.5, 1.5), randf_range(-1, 1))
+		_line(layer, start, bend, wood)
+		_line(layer, bend, end, wood)
+		if tip.length() > 10.0:
+			_line(layer, start + Vector2(1, 0), bend + Vector2(1, 0), wood)
+		if randf() < 0.6:
+			_px(layer, roundi(end.x), roundi(end.y) - 1, Color(0.55, 0.47, 0.33))
+	_outline(layer, Color(0.22, 0.16, 0.14))
+	img.blend_rect(layer, Rect2i(Vector2i.ZERO, rect.size), rect.position)
+
+
+func _bare_tree(img: Image, rect: Rect2i, tips: Array) -> void:
+	var top := _trunk_top(img, rect)
+	var wood := img.get_pixelv(Vector2i(top) + Vector2i(0, 2))
+	_clear_leaves(img, rect, false)
+	_draw_branches(img, rect, top + Vector2(0, 1), tips, wood.darkened(0.1))
+
+
+func _dead_bush(img: Image, rect: Rect2i, keep_berries: bool) -> void:
+	_clear_leaves(img, rect, keep_berries)
+	var base := Vector2(rect.position) + Vector2(rect.size.x / 2.0, rect.size.y - 3.0)
+	_draw_branches(img, rect, base, [Vector2(-6, -7), Vector2(5, -8), Vector2(-2, -10), Vector2(2, -6), Vector2(-4, -3), Vector2(6, -3)],
+		Color(0.48, 0.38, 0.28))
+	if keep_berries:
+		# Put the berries back on top of the twigs.
+		var src := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Objects/Basic Grass Biom things 1.png"))
+		src.convert(Image.FORMAT_RGBA8)
+		for y in range(rect.position.y, rect.end.y):
+			for x in range(rect.position.x, rect.end.x):
+				if _is_berry(src.get_pixel(x, y)):
+					img.set_pixel(x, y, src.get_pixel(x, y))
+
+
+# --- Houses (ART-2) ---
+
+## The farmhouse and the village houses: 64x80, the bottom edge is the ground line.
+## Window and door sit where house_exterior.tscn and village_building.gd board them up.
+func _make_houses() -> void:
+	_save(_house(Color(0.5, 0.29, 0.25)), "house_farm")
+	_save(_house(Color(0.33, 0.36, 0.42)), "house_village")
+
+
+func _house(roof: Color) -> Image:
+	var img := _img(64, 80)
+	var wood := Color(0.56, 0.41, 0.29)
+	var stone := Color(0.5, 0.48, 0.46)
+	# Chimney behind the roof.
+	_rect(img, 44, 2, 8, 16, stone)
+	_noise(img, Rect2i(44, 2, 8, 16), 0.05)
+	_rect(img, 43, 1, 10, 2, stone.darkened(0.25))
+	# Walls: vertical planks over a stone footing, in shadow under the eaves.
+	_rect(img, 1, 46, 62, 34, wood)
+	for x in range(1, 63):
+		if x % 5 == 0:
+			_rect(img, x, 46, 1, 31, wood.darkened(0.22))
+	_noise(img, Rect2i(1, 46, 62, 31), 0.025)
+	for knot: Vector2i in [Vector2i(8, 58), Vector2i(23, 52), Vector2i(54, 61), Vector2i(27, 70)]:
+		_px(img, knot.x, knot.y, wood.darkened(0.35))
+	_rect(img, 1, 46, 62, 3, wood.darkened(0.4))
+	_rect(img, 0, 76, 64, 4, stone)
+	for x in range(0, 64, 6):
+		_rect(img, x, 76, 1, 4, stone.darkened(0.25))
+	_noise(img, Rect2i(0, 76, 64, 4), 0.04)
+	# Roof: rows of shingles, each row a little lighter toward the eaves.
+	_poly(img, PackedVector2Array([Vector2(7, 6), Vector2(57, 6), Vector2(64, 47), Vector2(0, 47)]), roof)
+	for row in range(0, 11):
+		var y := 8 + row * 4
+		var shade := roof.lightened(row * 0.012)
+		for x in 64:
+			if img.get_pixel(x, y).a > 0.0 and img.get_pixel(x, y - 1).a > 0.0:
+				_px(img, x, y, shade.darkened(0.3))
+				if (x + row * 3) % 7 == 0:
+					_px(img, x, y + 1, shade.darkened(0.3))
+					_px(img, x, y + 2, shade.darkened(0.2))
+	_noise(img, Rect2i(0, 6, 64, 41), 0.03)
+	_rect(img, 7, 5, 50, 2, roof.darkened(0.35))
+	_rect(img, 0, 46, 64, 2, roof.darkened(0.45))
+	# Window with a frame and sill.
+	_rect(img, 2, 66, 13, 10, wood.darkened(0.45))
+	_rect(img, 3, 67, 11, 8, Color(0.15, 0.17, 0.23))
+	_rect(img, 8, 67, 1, 8, wood.darkened(0.45))
+	_rect(img, 3, 70, 11, 1, wood.darkened(0.45))
+	_px(img, 4, 68, Color(0.45, 0.5, 0.58))
+	_px(img, 5, 68, Color(0.35, 0.4, 0.48))
+	_rect(img, 1, 76, 15, 1, wood.lightened(0.1))
+	# Door with a frame, planks and a handle.
+	_rect(img, 32, 63, 17, 13, wood.darkened(0.5))
+	_rect(img, 33, 64, 15, 12, Color(0.42, 0.28, 0.2))
+	for x: int in [37, 41, 45]:
+		_rect(img, x, 64, 1, 12, Color(0.34, 0.22, 0.16))
+	_px(img, 45, 70, Color(0.85, 0.7, 0.35))
+	_rect(img, 33, 66, 15, 1, Color(0.34, 0.22, 0.16))
+	_outline(img, INK)
+	return img
 
 
 # --- Fish ---
@@ -734,3 +956,42 @@ func _make_sounds() -> void:
 		s.low = lerpf(s.low, randf_range(-1, 1), 0.01)
 		var drip := sin(t * TAU * 1200.0) * exp(-fmod(t, 2.3) * 40.0) * 0.15 if t > 1.0 else 0.0
 		return s.low * 0.9 + sin(t * TAU * 41.0) * 0.12 + drip), "mine_drone", true)
+	_wav(_sound(1.6, func(_t: float, p: float, s: Dictionary) -> float:
+		s.low = lerpf(s.low, randf_range(-1, 1), 0.45)
+		var syllables := pow(sin(p * PI * 5.0), 2.0)
+		return s.low * syllables * sin(p * PI) * 0.35), "whisper")
+
+
+## A slow, slightly out-of-tune music box over a low hum (ATM-6). Loops seamlessly.
+func _make_music() -> void:
+	const LENGTH := 32.0
+	# Seconds and frequencies: A minor with a flat second that never quite resolves.
+	var notes := [
+		[0.0, 659.26], [1.5, 523.25], [3.0, 440.0], [6.0, 466.16],
+		[8.0, 659.26], [9.5, 587.33], [11.0, 440.0], [14.0, 349.23],
+		[16.0, 659.26], [17.5, 523.25], [19.0, 440.0], [20.5, 622.25],
+		[24.0, 587.33], [25.5, 466.16], [27.0, 440.0], [29.0, 392.0],
+	]
+	for note: Array in notes:
+		note[1] *= randf_range(0.992, 0.998)
+	var count := int(LENGTH * MIX_RATE)
+	var out := PackedFloat32Array()
+	out.resize(count)
+	for i in count:
+		var t := float(i) / MIX_RATE
+		var wow := 1.0 + 0.004 * sin(TAU * t * 4.0 / LENGTH)
+		var bell := 0.0
+		for note: Array in notes:
+			var dt: float = t - note[0]
+			if dt < 0.0:
+				dt += LENGTH  # The tail of a note from the end of the loop.
+			if dt > 6.0:
+				continue
+			var f: float = note[1] * wow
+			var env := exp(-dt * 1.1) * minf(dt * 200.0, 1.0)
+			bell += (sin(TAU * f * dt) + 0.3 * sin(TAU * f * 2.0 * dt) + 0.15 * sin(TAU * f * 3.01 * dt) * exp(-dt * 3.0)) * env
+		var swell := 0.5 + 0.5 * sin(TAU * t / 16.0)
+		var hum := (sin(TAU * 110.0 * t) + 0.6 * sin(TAU * 165.0 * t)) * 0.5 \
+			+ sin(TAU * 116.5625 * t) * 0.35 * (0.5 - 0.5 * cos(TAU * t / LENGTH))
+		out[i] = bell * 0.16 + hum * 0.08 * (0.6 + 0.4 * swell)
+	_wav(out, "music", true)

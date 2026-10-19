@@ -115,6 +115,8 @@ var quests: QuestBoard
 var village: Dictionary[StringName, String] = {}
 ## Deepest mine floor reached (0 = never been down).
 var deepest_floor := 0
+## What the player named the man on the phone ("" until they do, PHN-10).
+var caller_name := ""
 ## One-off events: "found_sword", "deep_call", ...
 var flags: Dictionary[String, bool] = {}
 ## Set by SaveGame.load_game(); the main scene applies the farm part when it loads.
@@ -145,6 +147,7 @@ func new_game() -> void:
 	_tick_time = 0.0
 	_fainting = false
 	deepest_floor = 0
+	caller_name = ""
 	flags.clear()
 	pending_load = {}
 	inventory = Inventory.new()
@@ -214,6 +217,13 @@ func pick_fish(place := 7) -> FishData:
 		if roll <= 0:
 			return f
 	return candidates[0]
+
+
+## How the man on the phone is referred to: the name the player gave him, or "him" ("He" at the start of a sentence).
+func get_caller(subject := false) -> String:
+	if caller_name != "":
+		return caller_name
+	return "He" if subject else "him"
 
 
 func add_money(amount: int) -> void:

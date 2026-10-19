@@ -1,7 +1,8 @@
 extends Node2D
 ## Makes the farm feel watched without ever showing anything: eyes in the dark
 ## that vanish when you look at them, footsteps that follow you and stop when you
-## stop, animals all staring at the same spot, and small things moved overnight.
+## stop (with a blurred figure trailing behind that is gone the moment you turn,
+## ATM-7), animals all staring at the same spot, and small things moved overnight.
 ## Nothing here can ever touch or hurt the player.
 
 ## Seconds between cues, at noon and in the middle of the night.
@@ -13,6 +14,11 @@ const EYES_VANISH_DISTANCE := 70.0
 const EYES_LOOK_DOT := 0.85
 const ECHO_DELAY := 0.3
 const ECHO_DISTANCE := 30.0
+## How far behind the figure trails, how see-through it is, and how far the player
+## has to turn toward it before it's gone.
+const FIGURE_DISTANCE := 44.0
+const FIGURE_ALPHA := 0.4
+const FIGURE_LOOK_DOT := 0.1
 ## Decorations without collision (flowers, mushrooms, sprouts) that can move overnight.
 const MOVABLE_DECOR: Array[Vector2i] = [
 	Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 0), Vector2i(8, 0), Vector2i(5, 1), Vector2i(6, 1),
@@ -28,6 +34,7 @@ var _next_cue := 0.0
 var _eyes_time := 0.0
 var _echo_time := 0.0
 var _since_player_step := 0.0
+var _figure := Node2D.new()
 
 ## Drawn on a layer above the night shader so the eyes glow in the dark.
 @onready var _eyes: Sprite2D = $Glow/Eyes
@@ -36,6 +43,10 @@ var _since_player_step := 0.0
 
 func _ready() -> void:
 	_eyes.hide()
+	_figure.draw.connect(_draw_figure)
+	_figure.hide()
+	# Sorted with the player, trees and buildings so it can stand behind things.
+	player.get_parent().add_child.call_deferred(_figure)
 	player.stepped.connect(_on_player_stepped)
 	GameState.day_changed.connect(_on_day_changed)
 	_next_cue = randf_range(40.0, 80.0)
@@ -44,6 +55,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_eyes(delta)
 	_update_echo(delta)
+	_update_figure(delta)
 	if UI.is_blocking() or player.in_mine:
 		return
 	_next_cue -= delta
@@ -128,6 +140,42 @@ func _is_dark_cover(cell: Vector2i) -> bool:
 func _start_following_steps() -> void:
 	_echo_time = randf_range(6.0, 10.0)
 	_since_player_step = 0.0
+	_figure.global_position = _behind_player()
+	_figure.modulate.a = 0.0
+	_figure.show()
+
+
+# --- The figure behind (ATM-7) ---
+
+func _behind_player() -> Vector2:
+	return player.global_position - player.facing * FIGURE_DISTANCE
+
+
+## Trails the player while the footsteps last; turning toward it makes it vanish at once.
+func _update_figure(delta: float) -> void:
+	if not _figure.visible:
+		return
+	var to_figure := _figure.global_position - player.global_position
+	if _echo_time <= 0.0 or player.indoors or player.in_mine or to_figure.normalized().dot(player.facing) > FIGURE_LOOK_DOT:
+		_figure.hide()
+		return
+	_figure.global_position = _figure.global_position.lerp(_behind_player(), minf(delta * 2.5, 1.0))
+	# Never quite in focus: it fades in and wavers.
+	_figure.modulate.a = minf(_figure.modulate.a + delta * 0.3, FIGURE_ALPHA)
+	_figure.queue_redraw()
+
+
+## A tall, thin, dark shape, drawn a few times slightly offset so it looks blurred.
+func _draw_figure() -> void:
+	var color := Color(0.04, 0.03, 0.05, 0.35)
+	var wobble := sin(Time.get_ticks_msec() * 0.004)
+	for offset: Vector2 in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(wobble, 0)]:
+		_figure.draw_circle(offset + Vector2(0, -24), 3.0, color)
+		_figure.draw_rect(Rect2(offset + Vector2(-3, -21), Vector2(6, 13)), color)
+		_figure.draw_rect(Rect2(offset + Vector2(-3, -8), Vector2(2, 8)), color)
+		_figure.draw_rect(Rect2(offset + Vector2(1, -8), Vector2(2, 8)), color)
+		_figure.draw_line(offset + Vector2(-3, -19), offset + Vector2(-4, -9), color)
+		_figure.draw_line(offset + Vector2(3, -19), offset + Vector2(4, -9), color)
 
 
 func _on_player_stepped() -> void:

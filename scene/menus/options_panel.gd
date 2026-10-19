@@ -1,6 +1,6 @@
 class_name OptionsPanel
 extends VBoxContainer
-## Volume, fullscreen and the list of controls (UI-4). Used by the title screen and the pause menu.
+## Volume, fullscreen, the player's look (ART-1) and the list of controls (UI-4). Used by the title screen and the pause menu.
 
 signal closed
 
@@ -51,6 +51,20 @@ func _ready() -> void:
 		UI.save_options())
 	add_child(fullscreen)
 
+	var look_row := HBoxContainer.new()
+	var look_label := Label.new()
+	look_label.text = "Look"
+	look_label.custom_minimum_size.x = 70
+	look_row.add_child(look_label)
+	var look := OptionButton.new()
+	for name: String in UI.LOOKS:
+		look.add_item(name.capitalize())
+	look.selected = maxi(UI.LOOKS.find(UI.player_look), 0)
+	look.item_selected.connect(func(index: int) -> void:
+		UI.set_player_look(UI.LOOKS[index]))
+	look_row.add_child(look)
+	add_child(look_row)
+
 	var controls := Label.new()
 	controls.add_theme_font_size_override("font_size", 8)
 	controls.add_theme_color_override("font_color", UITheme.DIM_TEXT)
@@ -64,6 +78,7 @@ func _ready() -> void:
 	_back.pressed.connect(closed.emit)
 	add_child(_back)
 	slider.focus_neighbor_bottom = fullscreen.get_path()
+	fullscreen.focus_neighbor_bottom = look.get_path()
 
 
 func focus() -> void:

@@ -84,6 +84,7 @@ static func save(main: Node) -> bool:
 		"village": gs.village,
 		"deepest_floor": gs.deepest_floor,
 		"flags": gs.flags,
+		"caller_name": gs.caller_name,
 		"world": main.get_save_data(),
 	}
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -109,6 +110,7 @@ static func load_game() -> bool:
 	gs.water = float(data.get("water", gs.MAX_NEED))
 	gs.health = int(data.get("health", gs.MAX_HEALTH))
 	gs.deepest_floor = int(data.get("deepest_floor", 0))
+	gs.caller_name = String(data.get("caller_name", ""))
 	for key: String in data.get("flags", {}):
 		gs.flags[key] = bool(data.flags[key])
 	for id: String in data.get("village", {}):

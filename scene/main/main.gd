@@ -12,10 +12,16 @@ const ROOM_SIZE := Vector2(160, 112)
 @onready var _mine: Mine = $Objects/Mine
 @onready var _cave: Node2D = $Objects/CaveEntrance
 @onready var _door_sound: AudioStreamPlayer = $DoorSound
+## Quiet, creepy music under the ambient sounds (ATM-6); slower and lower down the mine.
+var _music := AudioStreamPlayer.new()
 
 
 func _ready() -> void:
 	GameState.clock_running = true
+	_music.stream = preload("res://assets/Generated/music.wav")
+	_music.volume_db = -17.0
+	add_child(_music)
+	_music.play()
 	_door.interacted.connect(enter_house)
 	_interior.get_node("ExitArea").interacted.connect(leave_house)
 	_interior.get_node("Objects/Bed").sleep_requested.connect(sleep)
@@ -44,8 +50,12 @@ func leave_house() -> void:
 	_go_outside(_door.global_position + Vector2(0, 8))
 
 
-## The lift cage goes down to any floor already reached.
+## The lift cage goes down to any floor already reached. Boarded up until a main quest opens it (MIN-5).
 func choose_mine_floor() -> void:
+	if not GameState.quests.is_mine_unlocked() and GameState.deepest_floor == 0:
+		UI.show_dialogue(["Planks are nailed across the mouth of the mine. A chain, a padlock.",
+			"Something on the other side is breathing slow, or it's just the wind."])
+		return
 	if GameState.deepest_floor <= 1:
 		enter_mine(0)
 		return
@@ -64,6 +74,8 @@ func enter_mine(index: int) -> void:
 	_mine.enter_floor(index)
 	_player.teleport(_mine.get_start_position(), false, _mine)
 	_player.set_camera_limits(_mine.get_map_rect())
+	_music.pitch_scale = 0.85 - index * 0.04
+	_music.volume_db = -20.0 - index
 	var floor_data := _mine.floor_data
 	UI.post_message("Floor %d - %s" % [index + 1, floor_data.display_name])
 	var seen := "seen_floor_%d" % index
@@ -107,11 +119,18 @@ func _wake_up(report: Array[String]) -> void:
 
 
 func _go_outside(target: Vector2) -> void:
+	_surface_music()
 	_player.teleport(target, false, _farm)
 	_player.set_camera_limits(_farm.get_map_rect())
 
 
+func _surface_music() -> void:
+	_music.pitch_scale = 1.0
+	_music.volume_db = -17.0
+
+
 func _move_inside(target: Vector2) -> void:
+	_surface_music()
 	_player.teleport(target, true, _farm)
 	# Center the small room in the camera view.
 	var room_center := _interior.global_position + ROOM_SIZE / 2.0

@@ -63,6 +63,8 @@ func _ready() -> void:
 	_inventory.changed.connect(_update_highlight)
 	_sprite.frame_changed.connect(_on_frame_changed)
 	_add_chopping_animations()
+	_apply_look()
+	UI.look_changed.connect(func(_look: String) -> void: _apply_look())
 	for sound in ["chop", "pick", "swing", "hurt", "eat", "drink", "enemy_hit"]:
 		var player := AudioStreamPlayer.new()
 		player.stream = load("res://assets/Generated/%s.wav" % sound)
@@ -90,7 +92,7 @@ func _physics_process(delta: float) -> void:
 	if not UI.is_blocking():
 		# get_vector() normalizes diagonals, so all 8 directions move at the same speed.
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = input * SPEED * GameState.get_speed_factor()
+	velocity = input * SPEED * GameState.get_speed_factor() * area.get_speed_factor(global_position)
 	move_and_slide()
 	if input != Vector2.ZERO:
 		facing = input.normalized()
@@ -126,7 +128,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## The tile directly in front of the player, including diagonals.
 func get_target_cell() -> Vector2i:
-	return area.world_to_cell(global_position) + Vector2i(roundi(facing.x), roundi(facing.y))
+	var from := area.world_to_cell(global_position)
+	return area.adjust_target(from, from + Vector2i(roundi(facing.x), roundi(facing.y)))
 
 
 func is_fishing() -> bool:
@@ -347,6 +350,19 @@ func _add_chopping_animations() -> void:
 			texture.atlas = sheet
 			texture.region = Rect2(i * 48, CHOP_ROWS[direction], 48, 48)
 			frames.add_frame(animation, texture)
+
+
+## Points every frame at the sprite sheet of the chosen look (ART-1).
+func _apply_look() -> void:
+	var sheet := UI.get_look_texture("sheet")
+	var actions := UI.get_look_texture("actions")
+	var frames := _sprite.sprite_frames
+	for animation in frames.get_animation_names():
+		for i in frames.get_frame_count(animation):
+			var texture := frames.get_frame_texture(animation, i) as AtlasTexture
+			if texture:
+				var is_actions := texture.atlas.resource_path.contains("ctions")
+				texture.atlas = actions if is_actions else sheet
 
 
 func _on_frame_changed() -> void:

@@ -14,9 +14,11 @@ const DIRT_TERRAIN := 1
 const CROP_OFFSET := Vector2(0, 6)
 const NATURE_SOURCE := 4
 
-# Tiles in "Basic Grass Biom things 1.png".
+# Tiles in assets/Generated/nature_dead.png ("Basic Grass Biom things 1.png" with dead trees).
 const BIG_TREE := Vector2i(1, 0)
 const APPLE_TREE := Vector2i(3, 0)
+## An apple tree with its apples picked; it stays alive (ART-3).
+const PICKED_APPLE_TREE := Vector2i(0, 5)
 const SMALL_TREE := Vector2i(0, 0)
 const SMALL_STUMP := Vector2i(3, 2)
 const BIG_STUMP := Vector2i(4, 2)
@@ -30,6 +32,18 @@ const MUSHROOMS: Array[Vector2i] = [Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 
 const RED_MUSHROOMS: Array[Vector2i] = [Vector2i(5, 0), Vector2i(6, 0)]
 ## Weeds and flowers: cleared with the hoe or by hand.
 const DECOR: Array[Vector2i] = [Vector2i(5, 1), Vector2i(6, 1), Vector2i(6, 2), Vector2i(7, 2), Vector2i(5, 3), Vector2i(6, 3), Vector2i(7, 3)]
+## Wild flowers among DECOR that can be picked (MAP-4): tile -> item.
+const WILD_FLOWERS := {
+	Vector2i(6, 2): preload("res://data/items/buttercup.tres"),
+	Vector2i(7, 2): preload("res://data/items/buttercup.tres"),
+	Vector2i(6, 3): preload("res://data/items/pink_clover.tres"),
+	Vector2i(7, 3): preload("res://data/items/pink_clover.tres"),
+	Vector2i(5, 3): preload("res://data/items/cornflower.tres"),
+}
+## Trees drawn two tiles tall: their trunk stands in the cell below the tile (TOL-4).
+const TALL_TREES: Array[Vector2i] = [BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE, SMALL_TREE]
+## Walking on a path is quicker than on grass (MOV-7).
+const PATH_SPEED := 1.3
 
 ## Swings of a basic axe/pickaxe needed (tool_power is taken off per swing).
 const TREE_HARDNESS := 3
@@ -144,6 +158,33 @@ func get_water(cell: Vector2i) -> Water:
 	return Water.LAKE
 
 
+func get_speed_factor(world_position: Vector2) -> float:
+	return PATH_SPEED if paths_layer.get_cell_source_id(world_to_cell(world_position)) != -1 else 1.0
+
+
+## Facing up from a tree's trunk cell aims at the trunk, not the canopy above it.
+func adjust_target(from: Vector2i, target: Vector2i) -> Vector2i:
+	if target == from + Vector2i.UP and _trunk_of(from) != Vector2i(-1, -1):
+		return from
+	return target
+
+
+## The tile cell of the tall tree whose trunk is in this cell, or (-1, -1).
+func _trunk_of(cell: Vector2i) -> Vector2i:
+	var above := cell + Vector2i.UP
+	return above if get_nature(above) in TALL_TREES else Vector2i(-1, -1)
+
+
+## The cell to chop when aiming at this one: a tall tree's tile when aiming at its trunk,
+## a stump or log on the cell itself, or (-1, -1) (the canopy can't be chopped).
+func _choppable(cell: Vector2i) -> Vector2i:
+	var trunk := _trunk_of(cell)
+	if trunk != Vector2i(-1, -1):
+		return trunk
+	var tile := get_nature(cell)
+	return cell if is_tree(tile) and not tile in TALL_TREES else Vector2i(-1, -1)
+
+
 ## An animal standing on the cell that has something to collect, or null.
 func get_animal_with_product(cell: Vector2i) -> Animal:
 	var center := cell_to_world(cell)
@@ -158,11 +199,12 @@ func get_animal_with_product(cell: Vector2i) -> Animal:
 func can_collect(cell: Vector2i) -> bool:
 	var tile := get_nature(cell)
 	return can_harvest(cell) or get_animal_with_product(cell) != null \
-		or tile == BERRY_BUSH or tile == APPLE_TREE or tile in MUSHROOMS
+		or tile == BERRY_BUSH or tile == APPLE_TREE or tile in MUSHROOMS or WILD_FLOWERS.has(tile) \
+		or get_nature(cell + Vector2i.UP) == APPLE_TREE
 
 
 func is_tree(tile: Vector2i) -> bool:
-	return tile in [BIG_TREE, APPLE_TREE, SMALL_TREE, SMALL_STUMP, BIG_STUMP, LOG]
+	return tile in [BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE, SMALL_TREE, SMALL_STUMP, BIG_STUMP, LOG]
 
 
 func is_rock(tile: Vector2i) -> bool:
@@ -185,7 +227,7 @@ func get_action(item: ItemData, cell: Vector2i) -> Action:
 		Tools.Type.FISHING_ROD:
 			return Action.FISH if is_fishable(cell) else Action.NONE
 		Tools.Type.AXE:
-			return Action.CHOP if is_tree(tile) else Action.NONE
+			return Action.CHOP if _choppable(cell) != Vector2i(-1, -1) else Action.NONE
 		Tools.Type.PICKAXE:
 			return Action.MINE if is_rock(tile) else Action.NONE
 	if GameState.get_crop_for_seed(item):
@@ -255,6 +297,14 @@ func _collect(cell: Vector2i) -> void:
 		animal.collect()
 		return
 	var tile := get_nature(cell)
+	if get_nature(cell + Vector2i.UP) == APPLE_TREE:
+		# Reaching up from under the apple tree.
+		cell += Vector2i.UP
+		tile = APPLE_TREE
+	if WILD_FLOWERS.has(tile):
+		if _give(WILD_FLOWERS[tile], 1):
+			nature_layer.erase_cell(cell)
+		return
 	if tile == BERRY_BUSH:
 		if _give(BERRIES, randi_range(2, 3)):
 			nature_layer.set_cell(cell, NATURE_SOURCE, BUSH)
@@ -262,7 +312,7 @@ func _collect(cell: Vector2i) -> void:
 		return
 	if tile == APPLE_TREE:
 		if _give(APPLE, randi_range(1, 2)):
-			nature_layer.set_cell(cell, NATURE_SOURCE, BIG_TREE)
+			nature_layer.set_cell(cell, NATURE_SOURCE, PICKED_APPLE_TREE)
 			_regrow[cell] = [APPLE_TREE, GameState.day + APPLE_REGROW_DAYS]
 		return
 	if tile in MUSHROOMS:
@@ -280,8 +330,10 @@ func _collect(cell: Vector2i) -> void:
 		crop.queue_free()
 
 
-## One swing at a tree or stump. Trees fall into stumps, stumps come out of the ground.
-func _chop(cell: Vector2i, axe: ItemData) -> void:
+## One swing at a tree or stump. Trees fall into stumps (left where the trunk stood),
+## stumps come out of the ground.
+func _chop(target: Vector2i, axe: ItemData) -> void:
+	var cell := _choppable(target)
 	var tile := get_nature(cell)
 	var stump := tile in [SMALL_STUMP, BIG_STUMP, LOG]
 	if not _swing(cell, axe, STUMP_HARDNESS if stump else TREE_HARDNESS):
@@ -289,11 +341,13 @@ func _chop(cell: Vector2i, axe: ItemData) -> void:
 	match tile:
 		SMALL_TREE:
 			_give(WOOD, 2)
-			nature_layer.set_cell(cell, NATURE_SOURCE, SMALL_STUMP)
-		BIG_TREE, APPLE_TREE:
+			nature_layer.erase_cell(cell)
+			nature_layer.set_cell(cell + Vector2i.DOWN, NATURE_SOURCE, SMALL_STUMP)
+		BIG_TREE, APPLE_TREE, PICKED_APPLE_TREE:
 			_give(WOOD, 4)
 			_regrow.erase(cell)
-			nature_layer.set_cell(cell, NATURE_SOURCE, BIG_STUMP)
+			nature_layer.erase_cell(cell)
+			nature_layer.set_cell(cell + Vector2i.DOWN, NATURE_SOURCE, BIG_STUMP)
 		_:
 			_give(WOOD, 2 if tile == LOG else 1)
 			nature_layer.erase_cell(cell)
@@ -327,7 +381,7 @@ func _on_day_changed(day: int) -> void:
 	_hits.clear()
 	for cell in _regrow.keys():
 		if day >= _regrow[cell][1]:
-			if get_nature(cell) in [BUSH, BIG_TREE]:
+			if get_nature(cell) in [BUSH, BIG_TREE, PICKED_APPLE_TREE]:
 				nature_layer.set_cell(cell, NATURE_SOURCE, _regrow[cell][0])
 			_regrow.erase(cell)
 	for i in NIGHTLY_MUSHROOMS:

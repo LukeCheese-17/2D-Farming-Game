@@ -8,4 +8,5 @@ kind = 2
 title = "The old mine"
 mine_floor = 2
 reward = 300
+unlocks_mine = true
 note = "There's a mine in the hills. Hasn't been worked in years.\nGo down to the second floor. Tell me what you see."

@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://wp88lruj8s8b" path="res://assets/Tilesets/Grass.png" id="2_5cagp"]
 [ext_resource type="Texture2D" uid="uid://dk47r08lpyp6n" path="res://assets/Tilesets/Tilled_Dirt_Wide_v2.png" id="3_y6usg"]
 [ext_resource type="Texture2D" uid="uid://c7q4onp01ddxn" path="res://assets/Tilesets/Tilled_Dirt_Wide.png" id="4_j0so5"]
-[ext_resource type="Texture2D" uid="uid://dwdr1orperov8" path="res://assets/Objects/Basic Grass Biom things 1.png" id="5_lqib2"]
+[ext_resource type="Texture2D" path="res://assets/Generated/nature_dead.png" id="5_lqib2"]
 [ext_resource type="Texture2D" uid="uid://gd2108l2cvv3" path="res://assets/Tilesets/Fences.png" id="6_fences"]
 [ext_resource type="Texture2D" path="res://assets/Generated/path.png" id="7_path"]
 [ext_resource type="Texture2D" path="res://assets/Objects/Wood_Bridge.png" id="8_bridge"]
@@ -514,6 +514,10 @@ texture = ExtResource("5_lqib2")
 8:2/0 = 0
 8:2/0/y_sort_origin = 14
 8:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-2, 10, 2, 10, 2, 15, -2, 15)
+0:5/size_in_atlas = Vector2i(2, 2)
+0:5/0 = 0
+0:5/0/y_sort_origin = 14
+0:5/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5, 8, 5, 8, 5, 14, -5, 14)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fences"]
 texture = ExtResource("6_fences")

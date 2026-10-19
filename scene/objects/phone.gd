@@ -12,6 +12,32 @@ const INTRO_GIVE_UP := 21 * 60
 const SILENT_CALL_CHANCE := 0.3
 const SILENT_CALL_LENGTH := 20
 
+## Questions the player can ask on the phone, each with a few vague answers (PHN-9).
+## "Who are you?" must stay first: it leads to naming him.
+const QUESTIONS := {
+	"Who are you?": [
+		["\"Who am I?\"", "\"Nobody you'd know. Call me whatever you like.\""],
+		["\"Names don't matter much out here.\"", "\"Call me whatever you like. I'll answer.\""],
+	],
+	"What happened here?": [
+		["\"Oh, people moved on. That happens.\"", "\"Don't go digging for reasons.\""],
+		["\"Bad harvests. Bad winters. Bad luck.\"", "\"...Is the field still quiet at night?\""],
+		["\"Nothing happened. That's the trouble.\""],
+	],
+	"Where did everyone go?": [
+		["\"Away.\"", "\"Some further than others.\""],
+		["\"They're around. Just not where you'd look.\""],
+	],
+	"Is someone out there?": [
+		["(Silence. Then a soft laugh.)", "\"You're tired. Get some sleep.\""],
+		["\"Out where?\"", "\"Lock the door if it helps you sleep.\""],
+	],
+	"Why did you sell the land?": [
+		["\"It wanted someone new.\"", "\"I mean, I wanted someone new on it. Someone to look after it.\""],
+		["\"I got old. It didn't.\""],
+	],
+}
+
 const INTRO_LINES: Array[String] = [
 	"So you're the one that bought this land.",
 	"Well... it's pretty run down. You'll have to liven this place up a bit.",
@@ -101,7 +127,8 @@ func _on_interacted() -> void:
 			_call()
 
 
-## The player calls him: he pays for a finished main quest, then takes orders.
+## The player calls him: he pays for a finished main quest, then the player can
+## order supplies or ask him things (PHN-4/5/9).
 func _call() -> void:
 	var board := GameState.quests
 	if not board.main_posted:
@@ -113,10 +140,23 @@ func _call() -> void:
 		GameState.add_money(reward)
 		var lines: Array[String] = ["\"%s. I saw. Good work.\"" % quest.title, "\"%dg. It's already in your pocket. Don't ask how.\"" % reward]
 		lines.append("\"There's a new note on the board.\"" if board.get_main() else "\"That's everything I needed. The place looks alive again.\"")
+		if board.get_main() and board.get_main().unlocks_mine:
+			lines.append("\"I had the boards taken off the old mine. Mind the dark.\"")
 		UI.show_dialogue(lines)
 		await UI.dialogue_finished
 		UI.post_message("+%dg" % reward)
-	await _order_supplies()
+	var index := 0
+	while true:
+		var title := "On the line" if GameState.caller_name == "" else "On the line: %s" % GameState.caller_name
+		UI.show_menu(title,["Order supplies", "Ask something", "Hang up"], "\"...Yes?\"", index)
+		index = await UI.menu_finished
+		match index:
+			0:
+				await _order_supplies()
+			1:
+				await _ask()
+			_:
+				return
 
 
 func _order_supplies() -> void:
@@ -126,11 +166,11 @@ func _order_supplies() -> void:
 		var options: Array[String] = []
 		for item in shop.stock:
 			options.append("%s - %dg" % [item.display_name, item.buy_price])
-		options.append("Hang up")
+		options.append("Back")
 		var ordered := 0
 		for count: int in GameState.get_supply_order().values():
 			ordered += count
-		UI.show_menu("\"What do you need?\"", options, "You have %dg. Ordered: %d" % [GameState.money, ordered], index)
+		UI.show_menu("\"What do you need?\"", options, "You have %dg. Ordered: %d. The rest is in the village." % [GameState.money, ordered], index)
 		index = await UI.menu_finished
 		if index < 0 or index == options.size() - 1:
 			return
@@ -139,3 +179,30 @@ func _order_supplies() -> void:
 			UI.post_message("Ordered %s. It'll be by the door in the morning." % item.display_name)
 		else:
 			UI.post_message("Not enough money.")
+
+
+## PHN-9: he never gives a straight answer. Asking who he is lets the player name him (PHN-10).
+func _ask() -> void:
+	var options: Array[String] = []
+	options.assign(QUESTIONS.keys())
+	options.append("Back")
+	UI.show_menu("Ask %s..." % GameState.get_caller(), options, "")
+	var index: int = await UI.menu_finished
+	if index < 0 or index == options.size() - 1:
+		return
+	var answers: Array = QUESTIONS[options[index]]
+	UI.show_dialogue(answers.pick_random())
+	await UI.dialogue_finished
+	if index == 0:
+		await _name_caller()
+
+
+func _name_caller() -> void:
+	UI.ask_text("Call him...", GameState.caller_name)
+	var text: String = await UI.text_finished
+	if text == "":
+		UI.show_dialogue(["\"No? Suit yourself.\""])
+	else:
+		GameState.caller_name = text
+		UI.show_dialogue(["\"%s.\"" % text, "(A long pause. You think you hear him smile.)", "\"That'll do.\""])
+	await UI.dialogue_finished

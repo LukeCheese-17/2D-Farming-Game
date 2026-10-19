@@ -20,6 +20,16 @@ func get_map_rect() -> Rect2:
 	return Rect2()
 
 
+## How fast the player walks here (paths are quicker, MOV-7).
+func get_speed_factor(_world_position: Vector2) -> float:
+	return 1.0
+
+
+## Lets the area change which cell the player aims at from the cell they stand in.
+func adjust_target(_from: Vector2i, target: Vector2i) -> Vector2i:
+	return target
+
+
 ## True if using the item on the cell would do something.
 func can_use(_item: ItemData, _cell: Vector2i) -> bool:
 	return false

@@ -143,6 +143,24 @@ func _lay_paths(layer: TileMapLayer) -> void:
 	_path_rect(60, 18, 2, 18)            # North trail into the woods
 	_path_rect(31, 18, 30, 2)            # ...and west to the pond
 	_path_rect(71, 40, 2, 4)             # Pen gate to the road
+	_path_rect(60, 14, 2, 4)             # North trail on to the woods bridge
+	# Bridges (MAP-3): the end pieces with the posts stand on the banks and the
+	# planks cover all the water, so there's no gap; a path leads off each end.
+	var bridges := {}
+	for row in BRIDGE_ROWS:
+		var cells: Array[int] = []
+		for x in range(80, 100):
+			if _is_river(Vector2i(x, row)):
+				cells.append(x)
+		var west: int = cells.front() - 1
+		var east: int = cells.back() + 1
+		bridges[Vector2i(west, row)] = 2
+		bridges[Vector2i(east, row)] = 4
+		for x in cells:
+			bridges[Vector2i(x, row)] = 3
+		_path_rect(east + 1, row, 4, 1)
+		if row == BRIDGE_ROWS[0]:
+			_path_rect(62, row, west - 62, 1)
 	for cell: Vector2i in _paths.keys():
 		if not _land.has(cell):
 			_paths.erase(cell)
@@ -150,14 +168,11 @@ func _lay_paths(layer: TileMapLayer) -> void:
 		var variant := 3 if randf() < 0.06 else randi_range(0, 2)
 		layer.set_cell(cell, PATH_SOURCE, Vector2i(variant, 0))
 		_take(cell, 0)
-	for row in BRIDGE_ROWS:
-		var cells: Array[int] = []
-		for x in range(80, 100):
-			if _is_river(Vector2i(x, row)):
-				cells.append(x)
-		for i in cells.size():
-			var piece := 2 if i == 0 else (4 if i == cells.size() - 1 else 3)
-			layer.set_cell(Vector2i(cells[i], row), BRIDGE_SOURCE, Vector2i(piece, 0))
+	for cell: Vector2i in bridges:
+		layer.set_cell(cell, BRIDGE_SOURCE, Vector2i(bridges[cell], 0))
+		_paths[cell] = true
+		_take(cell + Vector2i.UP, 0)
+		_take(cell + Vector2i.DOWN, 0)
 
 
 # --- Trees, rocks and the rest ---
