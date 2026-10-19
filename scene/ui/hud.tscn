@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scene/ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://scene/ui/fishing_ring.gd" id="2_ring"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 3
@@ -35,19 +36,6 @@ text = "50g"
 [node name="JobLabel" type="Label" parent="Root/Status"]
 layout_mode = 2
 
-[node name="Inventory" type="VBoxContainer" parent="Root"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -70.0
-offset_top = 4.0
-offset_right = -6.0
-offset_bottom = 120.0
-grow_horizontal = 0
-mouse_filter = 2
-theme_override_constants/separation = 0
-
 [node name="MessageLabel" type="Label" parent="Root"]
 layout_mode = 1
 anchors_preset = 5
@@ -60,6 +48,22 @@ offset_bottom = 50.0
 grow_horizontal = 2
 horizontal_alignment = 1
 
+[node name="FishingRing" type="Control" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -110.0
+offset_right = 40.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_ring")
+
 [node name="PromptLabel" type="Label" parent="Root"]
 layout_mode = 1
 anchors_preset = 7
@@ -68,14 +72,14 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -150.0
-offset_top = -56.0
+offset_top = -54.0
 offset_right = 150.0
-offset_bottom = -42.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 horizontal_alignment = 1
 
-[node name="ToolLabel" type="Label" parent="Root"]
+[node name="ItemLabel" type="Label" parent="Root"]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -83,27 +87,26 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -150.0
-offset_top = -42.0
+offset_top = -40.0
 offset_right = 150.0
-offset_bottom = -28.0
+offset_bottom = -26.0
 grow_horizontal = 2
 grow_vertical = 0
 horizontal_alignment = 1
 
-[node name="Toolbar" type="HBoxContainer" parent="Root"]
+[node name="Hotbar" type="HBoxContainer" parent="Root"]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -60.0
-offset_top = -26.0
-offset_right = 60.0
-offset_bottom = -4.0
+offset_left = -109.0
+offset_top = -25.0
+offset_right = 109.0
+offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
-mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 1
 
@@ -135,3 +138,49 @@ autowrap_mode = 3
 [node name="Choices" type="Label" parent="Root/DialogueBox/VBox"]
 layout_mode = 2
 horizontal_alignment = 2
+
+[node name="Backpack" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -121.0
+offset_top = -64.0
+offset_right = 121.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Root/Backpack"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="Root/Backpack/VBox"]
+layout_mode = 2
+text = "Backpack   (Tab to close)"
+
+[node name="HotbarGrid" type="GridContainer" parent="Root/Backpack/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 10
+
+[node name="BackpackGrid" type="GridContainer" parent="Root/Backpack/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 10
+
+[node name="ItemInfo" type="Label" parent="Root/Backpack/VBox"]
+custom_minimum_size = Vector2(218, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+autowrap_mode = 3
+
+[node name="HeldIcon" type="TextureRect" parent="Root"]
+layout_mode = 0
+offset_right = 16.0
+offset_bottom = 16.0
+mouse_filter = 2

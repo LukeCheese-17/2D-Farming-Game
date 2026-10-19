@@ -1,20 +1,18 @@
 class_name Player
 extends CharacterBody2D
-## The farmer: 8-way movement, using the selected tool on the tile in front,
+## The farmer: 8-way movement, using the held hotbar item on the tile in front,
 ## fishing, and using things with the interact key. The origin is at the feet.
 
 ## Emitted on every footstep (used by the "being followed" footsteps).
 signal stepped
 
-enum Fishing { NONE, WAITING, BITE }
+enum Fishing { NONE, WAITING, MINIGAME }
 
 const SPEED := 80.0
 ## How long tool animations lock movement before the action happens.
 const ACTION_TIME := 0.5
 const BITE_WAIT_MIN := 1.5
 const BITE_WAIT_MAX := 5.0
-## How long the player has to press the tool key once a fish bites.
-const BITE_WINDOW := 0.9
 
 @export var farm: Farm
 @export var tile_highlight: TileHighlight
@@ -29,6 +27,7 @@ var _prompt := ""
 var _fishing := Fishing.NONE
 var _fishing_timer := 0.0
 
+@onready var _inventory: Inventory = GameState.inventory
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _camera: Camera2D = $Camera2D
 @onready var _bobber: Sprite2D = $Bobber
@@ -40,7 +39,8 @@ var _fishing_timer := 0.0
 
 func _ready() -> void:
 	set_camera_limits(farm.get_map_rect())
-	GameState.tool_changed.connect(_update_highlight)
+	_inventory.selection_changed.connect(_update_highlight)
+	_inventory.changed.connect(_update_highlight)
 	_sprite.frame_changed.connect(_on_frame_changed)
 
 
@@ -52,7 +52,7 @@ func _physics_process(delta: float) -> void:
 	if _busy:
 		return
 	var input := Vector2.ZERO
-	if not GameState.in_dialogue:
+	if not UI.is_blocking():
 		# get_vector() normalizes diagonals, so all 8 directions move at the same speed.
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	velocity = input * SPEED
@@ -64,20 +64,25 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if GameState.in_dialogue:
+	if UI.is_blocking():
 		return
 	if _fishing != Fishing.NONE:
-		if event.is_action_pressed("use_tool"):
-			_reel_in()
+		if _fishing == Fishing.WAITING and event.is_action_pressed("use_tool"):
+			UI.post_message("Too early. Nothing.")
+			_stop_fishing()
 		return
-	for i in Tools.Type.size():
-		if event.is_action_pressed("tool_%d" % (i + 1)):
-			GameState.select_tool(i as Tools.Type)
+	for i in Inventory.HOTBAR_SIZE:
+		if event.is_action_pressed("hotbar_%d" % (i + 1)):
+			_inventory.select(i)
 			return
-	if _busy:
+	if event.is_action_pressed("hotbar_next"):
+		_inventory.select_next(1)
+	elif event.is_action_pressed("hotbar_previous"):
+		_inventory.select_next(-1)
+	elif _busy:
 		return
-	if event.is_action_pressed("use_tool") and not indoors:
-		_use_tool()
+	elif event.is_action_pressed("use_tool") and not indoors:
+		_use_held_item()
 	elif event.is_action_pressed("interact") and not _interactables.is_empty():
 		_interactables.back().interact()
 
@@ -85,6 +90,10 @@ func _unhandled_input(event: InputEvent) -> void:
 ## The tile directly in front of the player, including diagonals.
 func get_target_cell() -> Vector2i:
 	return farm.world_to_cell(global_position) + Vector2i(roundi(facing.x), roundi(facing.y))
+
+
+func is_fishing() -> bool:
+	return _fishing != Fishing.NONE
 
 
 func set_camera_limits(rect: Rect2) -> void:
@@ -120,33 +129,34 @@ func remove_interactable(area: InteractArea) -> void:
 
 func _update_prompt() -> void:
 	var prompt := ""
-	if not GameState.in_dialogue and not _interactables.is_empty():
+	if not UI.is_blocking() and not _interactables.is_empty():
 		prompt = _interactables.back().prompt
 	if prompt != _prompt:
 		_prompt = prompt
-		GameState.set_prompt(prompt)
+		UI.set_prompt(prompt)
 
 
-func _use_tool() -> void:
-	var tool := GameState.current_tool
+func _use_held_item() -> void:
+	var item := _inventory.get_selected_item()
 	var cell := get_target_cell()
-	if tool == Tools.Type.FISHING_ROD:
+	var action := farm.get_action(item)
+	if action == Farm.Action.FISH:
 		if farm.is_fishable(cell):
 			_start_fishing(cell)
 		return
 	var animation := ""
-	match tool:
-		Tools.Type.HOE:
+	match action:
+		Farm.Action.TILL:
 			animation = "tilling_"
-		Tools.Type.WATERING_CAN:
+		Farm.Action.WATER:
 			animation = "watering_"
-	if animation != "" and farm.can_use_tool(tool, cell):
+	if animation != "" and farm.can_use(item, cell):
 		_busy = true
 		velocity = Vector2.ZERO
 		_sprite.play(animation + _direction_name())
 		await get_tree().create_timer(ACTION_TIME).timeout
 		_busy = false
-	farm.use_tool(tool, cell)
+	farm.use(item, cell)
 	_update_highlight()
 
 
@@ -154,6 +164,7 @@ func _use_tool() -> void:
 
 func _start_fishing(cell: Vector2i) -> void:
 	_fishing = Fishing.WAITING
+	UI.fishing = true
 	_fishing_timer = randf_range(BITE_WAIT_MIN, BITE_WAIT_MAX)
 	velocity = Vector2.ZERO
 	_sprite.play("idle_" + _direction_name())
@@ -164,32 +175,34 @@ func _start_fishing(cell: Vector2i) -> void:
 
 
 func _update_fishing(delta: float) -> void:
-	_fishing_timer -= delta
-	if _fishing == Fishing.WAITING and _fishing_timer <= 0.0:
-		_fishing = Fishing.BITE
-		_fishing_timer = BITE_WINDOW
-		_bobber.global_position.y += 2
-		_bite_sound.play()
-		GameState.post_message("Something bites!")
-	elif _fishing == Fishing.BITE and _fishing_timer <= 0.0:
-		GameState.post_message("It got away.")
-		_stop_fishing()
+	if _fishing == Fishing.WAITING:
+		_fishing_timer -= delta
+		if _fishing_timer <= 0.0:
+			_hook_fish()
 	_update_line()
 
 
-func _reel_in() -> void:
-	if _fishing == Fishing.BITE:
-		var fish := GameState.pick_fish()
-		GameState.add_item(fish.item)
-		GameState.post_message("Caught a %s." % fish.item.display_name)
-		_splash_sound.play()
+## A fish bites: play the timing-ring minigame to land it.
+func _hook_fish() -> void:
+	_fishing = Fishing.MINIGAME
+	_bobber.global_position.y += 2
+	_bite_sound.play()
+	var fish := GameState.pick_fish()
+	UI.start_fishing(fish, global_position)
+	var caught: bool = await UI.fishing_finished
+	if not caught:
+		UI.post_message("It got away.")
+	elif _inventory.add(fish.item) > 0:
+		UI.post_message("Your bag is full. You let the %s go." % fish.item.display_name)
 	else:
-		GameState.post_message("Too early. Nothing.")
+		UI.post_message("Caught a %s!" % fish.item.display_name)
+		_splash_sound.play()
 	_stop_fishing()
 
 
 func _stop_fishing() -> void:
 	_fishing = Fishing.NONE
+	UI.fishing = false
 	_bobber.hide()
 	_line.hide()
 
@@ -217,4 +230,4 @@ func _on_frame_changed() -> void:
 
 func _update_highlight() -> void:
 	var cell := get_target_cell()
-	tile_highlight.show_at(farm.cell_to_world(cell), farm.can_use_tool(GameState.current_tool, cell))
+	tile_highlight.show_at(farm.cell_to_world(cell), farm.can_use(_inventory.get_selected_item(), cell))

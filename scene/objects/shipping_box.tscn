@@ -38,7 +38,7 @@ shape = SubResource("RectangleShape2D_body")
 
 [node name="InteractArea" type="Area2D" parent="."]
 script = ExtResource("3_interact")
-prompt = "E: Put items in the shipping box"
+prompt = "E: Ship the item in your hand"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
 position = Vector2(0, -4)

@@ -1,6 +1,6 @@
 extends StaticBody2D
-## Shipping box: press interact to put every sellable item in it.
-## Everything inside is sold when the player sleeps (see GameState.sleep).
+## Shipping box: hold an item in the hotbar and press interact to put the whole
+## stack in. Everything inside is sold when the player sleeps (see GameState.sleep).
 
 const OPEN_TIME := 0.6
 
@@ -13,14 +13,12 @@ func _ready() -> void:
 
 
 func _on_interacted() -> void:
-	var shipped := GameState.ship_all()
-	if shipped.is_empty():
-		GameState.post_message("Nothing to ship")
+	var item := GameState.inventory.get_selected_item()
+	var shipped := GameState.ship_selected()
+	if shipped == 0:
+		UI.post_message("Hold something you can sell, then press E")
 		return
-	var parts: PackedStringArray = []
-	for item in shipped:
-		parts.append("%d %s" % [shipped[item], item.display_name])
-	GameState.post_message("Shipped " + ", ".join(parts))
+	UI.post_message("Shipped %d %s" % [shipped, item.display_name])
 	_closed.hide()
 	_open.show()
 	await get_tree().create_timer(OPEN_TIME).timeout

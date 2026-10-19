@@ -72,9 +72,9 @@ The core loops are:
 
 | ID | Requirement |
 |----|-------------|
-| INV-1 | The player has a simple inventory holding seeds, harvested produce, fish and animal products, with counts. |
-| INV-2 | The player can switch between the hoe, watering can, seeds, fishing rod, and empty hand (for harvesting and picking things up) with number keys. |
-| INV-3 | The selected tool/item and item counts are shown on screen. |
+| INV-1 | The player has a slot inventory: a 10-slot hotbar plus a 20-slot backpack. Items stack (up to 99); tools take one slot each. Tools, seeds, produce, fish and animal products are all items. |
+| INV-2 | Keys 1-0 (or the mouse wheel) select a hotbar slot. Using the selected item does its job: hoe tills, watering can waters, seeds plant, fishing rod fishes; anything else (or an empty slot) acts as an empty hand for harvesting and collecting. |
+| INV-3 | The hotbar is always on screen with icons, counts and the selected slot. Tab (or I) opens the backpack, where items are moved between slots with the mouse (click to pick up, click to put down; same items merge, different ones swap), and hovering shows the item name and sell price. A full bag refuses new items with a message. |
 
 ## 8. Atmosphere — horror, no monster
 
@@ -113,7 +113,7 @@ The horror comes from mood and suggestion only. Nothing ever attacks, chases or 
 | ID | Requirement |
 |----|-------------|
 | SHP-1 | The player has money, shown on screen. |
-| SHP-2 | There is a shipping box outside the house. The player can put items from their inventory into it with the interact key. |
+| SHP-2 | There is a shipping box outside the house. Holding a sellable item in the hotbar and pressing the interact key puts the whole stack in. |
 | SHP-3 | Every time the player sleeps, everything in the shipping box is sold and the money is added. |
 | SHP-4 | Each item type has a sell price, defined as data (like crops in TEC-4). |
 | SHP-5 | After sleeping, the player sees what was sold and how much they earned. |
@@ -123,7 +123,7 @@ The horror comes from mood and suggestion only. Nothing ever attacks, chases or 
 | ID | Requirement |
 |----|-------------|
 | FSH-1 | The player can fish with the fishing rod by facing water and using the tool. |
-| FSH-2 | After casting, there is a wait, then a bite signal; the player must react in time to catch the fish. |
+| FSH-2 | After casting, there is a wait, then a bite starts a timing-ring minigame: a needle sweeps around a dial and the player presses Space while it is in the lit zone. Enough hits in a row land the fish; a miss, or waiting too long, lets it go. Harder fish have a smaller zone, a faster needle and need more hits. |
 | FSH-3 | A caught fish goes into the inventory. There are at least two fish types, defined as data. |
 | FSH-4 | Fish can be shipped and sold, and can be asked for in phone tasks. |
 
@@ -144,7 +144,7 @@ The horror comes from mood and suggestion only. Nothing ever attacks, chases or 
 | TEC-2 | Ground uses `TileMapLayer` nodes with the shared `game_tile_set.tres`. |
 | TEC-3 | The tileset has a physics layer for blocking tiles and a custom data layer (`can_till: bool`) for tillable ground. |
 | TEC-4 | Crop types are defined as data (e.g. a `Resource` per crop: name, stage sprites, days to grow, produce) so new crops can be added without new code. The same applies to fish, animals, sellable items and phone tasks. |
-| TEC-5 | Input uses named actions in the Input Map (`move_up`, `move_down`, `move_left`, `move_right`, `use_tool`, `interact`, `tool_1`…`tool_5`), not hard-coded keys. |
+| TEC-5 | Input uses named actions in the Input Map (`move_up`, `move_down`, `move_left`, `move_right`, `use_tool`, `interact`, `hotbar_1`…`hotbar_10`, `hotbar_next`, `hotbar_previous`, `backpack`), not hard-coded keys. |
 | TEC-6 | Characters and objects y-sort so the player can walk behind trees and in front of them. |
 
 ## Open questions

@@ -55,10 +55,13 @@ func _process(delta: float) -> void:
 func collect() -> void:
 	if not has_product:
 		return
+	if not GameState.inventory.has_room_for(data.product):
+		UI.post_message("Your bag is full")
+		return
 	has_product = false
 	_bubble.hide()
-	GameState.add_item(data.product)
-	GameState.post_message("+1 %s" % data.product.display_name)
+	GameState.inventory.add(data.product)
+	UI.post_message("+1 %s" % data.product.display_name)
 
 
 ## Stops and stares toward a point for a while (part of the "being watched" atmosphere).

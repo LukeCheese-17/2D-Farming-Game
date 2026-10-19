@@ -46,7 +46,7 @@ func _on_passed_out() -> void:
 func _wake_up(report: Array[String]) -> void:
 	_move_inside(_interior.get_node("WakeSpawn").global_position)
 	if not report.is_empty():
-		GameState.show_dialogue(report)
+		UI.show_dialogue(report)
 
 
 func _move_inside(target: Vector2) -> void:

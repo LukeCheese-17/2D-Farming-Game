@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="CropData" format=3]
 
-[ext_resource type="Script" path="res://scene/crops/crop_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1_data"]
 [ext_resource type="Texture2D" uid="uid://dsa0ypl8tj0uf" path="res://assets/Objects/Basic_Plants.png" id="2_plants"]
 [ext_resource type="Resource" path="res://data/items/wheat_seeds.tres" id="3_seed"]
 [ext_resource type="Resource" path="res://data/items/wheat.tres" id="4_produce"]

@@ -44,7 +44,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_eyes(delta)
 	_update_echo(delta)
-	if GameState.in_dialogue:
+	if UI.is_blocking():
 		return
 	_next_cue -= delta
 	if _next_cue > 0.0:

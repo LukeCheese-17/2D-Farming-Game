@@ -29,7 +29,7 @@ func _ready() -> void:
 	_area.interacted.connect(_on_interacted)
 	GameState.day_changed.connect(func(_day: int) -> void: _schedule_calls())
 	GameState.time_changed.connect(_on_time_changed)
-	GameState.job_changed.connect(_schedule_job_call)
+	GameState.jobs.changed.connect(_schedule_job_call)
 	_schedule_calls()
 
 
@@ -53,7 +53,7 @@ func _schedule_calls() -> void:
 
 
 func _schedule_job_call() -> void:
-	if GameState.active_job or _ring == Ring.JOB:
+	if GameState.jobs.active or _ring == Ring.JOB:
 		_job_call_at = -1
 	elif _job_call_at < 0:
 		if GameState.day == 1:
@@ -82,7 +82,7 @@ func _start_ringing(kind: Ring) -> void:
 	_ring_started = GameState.minutes
 	_area.prompt = "E: Answer the phone"
 	_sound.play()
-	GameState.post_message("The phone is ringing.")
+	UI.post_message("The phone is ringing.")
 
 
 func _stop_ringing() -> void:
@@ -100,35 +100,35 @@ func _on_interacted() -> void:
 			_give_job()
 		Ring.SILENT:
 			_stop_ringing()
-			GameState.show_dialogue(["...", "(Someone is breathing on the other end.)", "(The line goes dead.)"])
+			UI.show_dialogue(["...", "(Someone is breathing on the other end.)", "(The line goes dead.)"])
 		Ring.NONE:
 			_offer_seeds()
 
 
 func _give_job() -> void:
 	var lines: Array[String] = []
-	match GameState.last_job_result:
+	var board := GameState.jobs
+	match board.last_result:
 		"done":
 			lines.append("You did what I asked. Good.")
 		"failed":
 			lines.append("You let me down. Don't do it again.")
-	GameState.last_job_result = ""
-	var job := GameState.get_next_job()
-	GameState.accept_job(job)
-	lines.append_array(job.get_lines(GameState.job_deadline))
-	GameState.show_dialogue(lines)
+	board.last_result = ""
+	var job := board.accept_next(GameState.day)
+	lines.append_array(job.get_lines(board.deadline))
+	UI.show_dialogue(lines)
 
 
 func _offer_seeds() -> void:
-	var seed := GameState.get_selected_crop().seed
-	GameState.show_dialogue(
+	var seed := GameState.crops[0].seed
+	UI.show_dialogue(
 		["A seed catalogue is taped to the wall by the phone.",
 		"%d %s, %dg. Delivered by morning." % [GameState.SEED_ORDER_AMOUNT, seed.display_name, GameState.SEED_ORDER_PRICE]],
 		["Order", "Hang up"])
-	var choice: int = await GameState.dialogue_finished
+	var choice: int = await UI.dialogue_finished
 	if choice != 0:
 		return
 	if GameState.order_seeds():
-		GameState.post_message("Ordered. -%dg" % GameState.SEED_ORDER_PRICE)
+		UI.post_message("Ordered. -%dg" % GameState.SEED_ORDER_PRICE)
 	else:
-		GameState.post_message("Not enough money.")
+		UI.post_message("Not enough money.")

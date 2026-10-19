@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://dteltlrhl0y10" path="res://assets/Objects/Basic_tools_and_meterials.png" id="2_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("2_tex")
+region = Rect2(32, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_item")
+id = &"hoe"
+display_name = "Hoe"
+icon = SubResource("AtlasTexture_icon")
+max_stack = 1
+tool = 1

@@ -3,6 +3,8 @@ extends Node
 ## Owns the farm tiles: tilling, planting, watering, daily growth and harvesting.
 ## Also adds collision so the player can't walk off the grass into the water.
 
+enum Action { TILL, WATER, PLANT, FISH, HAND }
+
 const CROP_SCENE := preload("res://scene/crops/crop.tscn")
 ## Terrain set and terrain index of "Tilled dirt Terrain" in game_tile_set.tres.
 const DIRT_TERRAIN_SET := 0
@@ -88,31 +90,47 @@ func get_animal_with_product(cell: Vector2i) -> Animal:
 	return null
 
 
-func can_use_tool(tool: Tools.Type, cell: Vector2i) -> bool:
-	match tool:
+## What using an item does: tools do their job, seeds are planted, anything else is an empty hand.
+func get_action(item: ItemData) -> Action:
+	if item == null:
+		return Action.HAND
+	match item.tool:
 		Tools.Type.HOE:
-			return can_till(cell)
+			return Action.TILL
 		Tools.Type.WATERING_CAN:
-			return can_water(cell)
-		Tools.Type.SEEDS:
-			return can_plant(cell) and GameState.get_item_count(GameState.get_selected_crop().seed) > 0
+			return Action.WATER
 		Tools.Type.FISHING_ROD:
+			return Action.FISH
+	if GameState.get_crop_for_seed(item):
+		return Action.PLANT
+	return Action.HAND
+
+
+func can_use(item: ItemData, cell: Vector2i) -> bool:
+	match get_action(item):
+		Action.TILL:
+			return can_till(cell)
+		Action.WATER:
+			return can_water(cell)
+		Action.PLANT:
+			return can_plant(cell)
+		Action.FISH:
 			return is_fishable(cell)
-		Tools.Type.HAND:
+		Action.HAND:
 			return can_harvest(cell) or get_animal_with_product(cell) != null
 	return false
 
 
-## Performs the tool's action on the cell, if it can be done there. Fishing is handled by the player.
-func use_tool(tool: Tools.Type, cell: Vector2i) -> void:
-	match tool:
-		Tools.Type.HOE:
+## Uses the item on the cell, if it can be done there. Fishing is handled by the player.
+func use(item: ItemData, cell: Vector2i) -> void:
+	match get_action(item):
+		Action.TILL:
 			_till(cell)
-		Tools.Type.WATERING_CAN:
+		Action.WATER:
 			_water(cell)
-		Tools.Type.SEEDS:
-			_plant(cell, GameState.get_selected_crop())
-		Tools.Type.HAND:
+		Action.PLANT:
+			_plant(cell, item)
+		Action.HAND:
 			_harvest(cell)
 
 
@@ -129,11 +147,11 @@ func _water(cell: Vector2i) -> void:
 	wet_layer.set_cells_terrain_connect([cell], DIRT_TERRAIN_SET, DIRT_TERRAIN)
 
 
-func _plant(cell: Vector2i, crop_data: CropData) -> void:
-	if not can_plant(cell) or not GameState.remove_item(crop_data.seed):
+func _plant(cell: Vector2i, seed: ItemData) -> void:
+	if not can_plant(cell) or not GameState.inventory.remove(seed):
 		return
 	var crop: Crop = CROP_SCENE.instantiate()
-	crop.setup(crop_data)
+	crop.setup(GameState.get_crop_for_seed(seed))
 	crop.position = crops_parent.to_local(cell_to_world(cell) + CROP_OFFSET)
 	crops_parent.add_child(crop)
 	_crops[cell] = crop
@@ -148,13 +166,16 @@ func _harvest(cell: Vector2i) -> void:
 	if crop == null:
 		return
 	if not crop.is_ripe():
-		GameState.post_message("Not ripe yet")
+		UI.post_message("Not ripe yet")
 		return
-	GameState.add_item(crop.data.produce, crop.data.harvest_amount)
-	GameState.post_message("+%d %s" % [crop.data.harvest_amount, crop.data.display_name])
+	var produce := crop.data.produce
+	if not GameState.inventory.has_room_for(produce, crop.data.harvest_amount):
+		UI.post_message("Your bag is full")
+		return
+	GameState.inventory.add(produce, crop.data.harvest_amount)
+	UI.post_message("+%d %s" % [crop.data.harvest_amount, produce.display_name])
 	_crops.erase(cell)
 	crop.queue_free()
-
 
 ## Crops watered today grow one step; then all soil dries out.
 func _on_day_changed(_day: int) -> void:
