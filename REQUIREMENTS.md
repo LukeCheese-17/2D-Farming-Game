@@ -21,6 +21,7 @@ The core loops are:
 | MOV-4 | The player faces the last direction moved. Diagonals use the matching left/right animation (the sprite sheet only has 4 directions). |
 | MOV-5 | The player cannot walk through water or solid objects (trees, fences, buildings). |
 | MOV-6 | The camera follows the player and stays within the map bounds. |
+| MOV-7 | The player walks faster on paths than on grass. |
 
 **Done when:** the player can walk in all 8 directions at the same speed, animations match the direction, and water blocks movement.
 
@@ -84,11 +85,13 @@ The mine (MIN) is the one exception: it has enemies.
 
 | ID | Requirement |
 |----|-------------|
-| ATM-1 | **There is no monster on the surface.** No creature, enemy or figure is ever shown above ground, and there is no combat there. Enemies exist only in the mine (MIN-3). |
+| ATM-1 | **There is no monster on the surface.** Nothing ever attacks or chases the player above ground, and there is no combat there. The only figure ever glimpsed is the follower in ATM-7, which is gone the moment it is looked at. Enemies exist only in the mine (MIN-3). |
 | ATM-2 | The game constantly suggests the player is being watched, using small, deniable cues. Examples: something just at the edge of the screen that is gone when you look, eyes in the dark tree line, footsteps that stop when you stop, objects moved slightly overnight, animals all turning to stare at the same spot. |
 | ATM-3 | Cues are subtle and rare enough to stay unsettling, not jump-scares. They should be easy to miss. |
 | ATM-4 | The visual mood is muted and lonely (for example: desaturated colours, a dark vignette, fog or dimming toward the edges of the map), while keeping the cozy pixel-art style readable. |
 | ATM-5 | Evening and night feel noticeably more uneasy than daytime (darker lighting, more frequent cues). |
+| ATM-6 | Subtle, creepy background music plays under the ambient sounds. |
+| ATM-7 | When extra footsteps are heard behind the player, a figure trails behind them, just out of focus. It vanishes as soon as the player turns to look at it. |
 
 ## 9. The house
 
@@ -106,9 +109,11 @@ The mine (MIN) is the one exception: it has enemies.
 | PHN-2 | The player answers by walking to the phone and pressing the interact key. |
 | PHN-3 | On the first morning the man who sold the land calls: "So you're the one that bought this land... I'll send you some quests on that board in the village center. Come back to me when you've got a quest done and I'll send you the cash. Also call me if you ever need more supplies." His call puts the first main quest on the board (QST-3). If missed, he calls again the next morning. |
 | PHN-4 | After that, the player uses the phone to call him. If the current main quest is done, he pays its reward and the next main quest goes up. |
-| PHN-5 | Calling him also lets the player order basic supplies (seeds, bread, water); orders are left at the door the next morning. |
+| PHN-5 | Calling him also lets the player order basic supplies: only water, bread and wheat seeds. Orders are left at the door the next morning. Everything else comes from the village shops. |
 | PHN-7 | The caller's lines stay short and slightly off, adding to the uneasy mood (ATM-2), without ever revealing who or what he is. |
 | PHN-8 | Phone calls only start from 06:00 (the start of the day). |
+| PHN-9 | When calling him, the player can ask him questions (e.g. "Who are you?", "What happened here?"). He always answers vaguely and never gives a straight answer. |
+| PHN-10 | Asked who he is, he tells the player to call him whatever they like. The player types a name, and from then on he is called that everywhere (dialogue, quests, phone menu). The name is saved. |
 
 ## 11. Money and the shipping box
 
@@ -149,6 +154,7 @@ The mine (MIN) is the one exception: it has enemies.
 | TEC-4 | Crop types are defined as data (e.g. a `Resource` per crop: name, stage sprites, days to grow, produce) so new crops can be added without new code. The same applies to fish, animals, sellable items and quests. |
 | TEC-5 | Input uses named actions in the Input Map (`move_up`, `move_down`, `move_left`, `move_right`, `use_tool`, `interact`, `hotbar_1`…`hotbar_10`, `hotbar_next`, `hotbar_previous`, `backpack`), not hard-coded keys. |
 | TEC-6 | Characters and objects y-sort so the player can walk behind trees and in front of them. |
+| TEC-7 | The game does not use exclusive fullscreen: it runs in a window or borderless fullscreen, so the player can alt-tab out freely. |
 
 ## 15. Map revamp
 
@@ -156,6 +162,8 @@ The mine (MIN) is the one exception: it has enemies.
 |----|-------------|
 | MAP-1 | The map is redesigned to be bigger and better: farm, woods, river/pond, the way to the mine and the abandoned village. |
 | MAP-2 | Areas are connected so the player can walk between them (or travel through map exits). |
+| MAP-3 | Bridges connect fully to the land on both banks, with no gaps or blocked ends. |
+| MAP-4 | Wild flowers on the map can be picked by hand and go into the inventory (they can be sold or used in quests). |
 
 ## 16. Food and water
 
@@ -173,6 +181,7 @@ The mine (MIN) is the one exception: it has enemies.
 | TOL-1 | An axe cuts down trees, giving wood. |
 | TOL-2 | A pickaxe breaks rocks, giving stone (and ore in the mine). |
 | TOL-3 | Crops can be harvested and animal products collected while holding any tool, not only an empty hand. |
+| TOL-4 | Trees are chopped by targeting the bottom part of their sprite (the trunk), not the canopy. |
 
 ## 18. The mine
 
@@ -181,7 +190,9 @@ The mine (MIN) is the one exception: it has enemies.
 | MIN-1 | There is a mine with 5 floors, giving the player more to do during the day. |
 | MIN-2 | Each floor is a different biome with its own look, rocks and materials. |
 | MIN-3 | Each floor has its own terrifying enemies. The player can fight them and can be hurt. |
-| MIN-4 | Mine materials (stone, ores, etc.) are used by the blacksmith (VIL-3) and to rebuild the village. |
+| MIN-4 | Mine materials (stone, ores, etc.) are used by the blacksmith (VIL-2) and to rebuild the village. |
+| MIN-5 | The mine is locked at first and has to be unlocked (e.g. through the main quest chain) before the player can go in. |
+| MIN-6 | The further down the player goes, the creepier things get: more frequent and stranger cues, sounds and events on each deeper floor. |
 
 ## 19. The abandoned village
 
@@ -201,7 +212,16 @@ The mine (MIN) is the one exception: it has enemies.
 | QST-3 | The main quest only changes when the last one is completed and paid for by phone. Main quests can ask for items (left at the board), a rebuilt village building, or a mine floor reached. |
 | QST-4 | The two daily notes are picked at random every morning, ask for items handed in at the board, and pay a small amount of cash on the spot. |
 
-## 21. Menus, UI and saving
+## 21. Art and visuals
+
+| ID | Requirement |
+|----|-------------|
+| ART-1 | The player sprite is updated, and the player can pick from several looks: default, updated, Halloween and black. |
+| ART-2 | The village houses (and the farmhouse) get new, more refined sprites. |
+| ART-3 | Trees and bushes look dead. Apple trees stay alive. |
+| ART-4 | Graphical glitches are fixed (e.g. tile seams, misaligned or overlapping sprites, wrong draw order). |
+
+## 22. Menus, UI and saving
 
 | ID | Requirement |
 |----|-------------|
@@ -238,7 +258,7 @@ Other choices made while building:
 
 ## Out of scope (for now)
 
-Seasons and crafting. (Saving, mine enemies and the village are now in scope — sections 15-21.)
+Seasons and crafting. (Saving, mine enemies and the village are now in scope — sections 15-22.)
 
 ## Done when (full loop)
 
