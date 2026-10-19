@@ -33,6 +33,7 @@ func _initialize() -> void:
 	_make_human()
 	_make_houses()
 	_make_music()
+	_make_ranch()
 	print("Generated assets.")
 	quit()
 
@@ -1169,3 +1170,149 @@ func _make_music() -> void:
 			+ sin(TAU * 116.5625 * t) * 0.35 * (0.5 - 0.5 * cos(TAU * t / LENGTH))
 		out[i] = bell * 0.16 + hum * 0.08 * (0.6 + 0.4 * swell)
 	_wav(out, "music", true)
+
+# --- Ranch: gates, the new animals and what they give (ANM-5..ANM-8) ---
+
+func _make_ranch() -> void:
+	# Gates, 2x2 tiles: closed and open, across (top row) and up-down (bottom row).
+	var gate := _img(32, 32)
+	var light := Color(0.86, 0.72, 0.52)
+	var mid := Color(0.7, 0.52, 0.36)
+	var dark := Color(0.5, 0.34, 0.25)
+	for x: int in [0, 14, 16, 30]:
+		_rect(gate, x, 3, 2, 11, dark)
+		_rect(gate, x, 3, 2, 1, light)
+	_rect(gate, 2, 5, 12, 2, mid)
+	_rect(gate, 2, 9, 12, 2, mid)
+	_line(gate, Vector2(2, 10), Vector2(13, 6), dark)
+	_rect(gate, 2, 5, 12, 1, light)
+	# Open: swung towards you, seen edge-on.
+	_rect(gate, 18, 6, 3, 9, mid)
+	_rect(gate, 18, 6, 3, 1, light)
+	_line(gate, Vector2(19, 7), Vector2(19, 14), dark)
+	for y: int in [16, 30]:
+		_rect(gate, 5, y, 6, 2, dark)
+		_rect(gate, 21, y, 6, 2, dark)
+		_rect(gate, 5, y, 6, 1, light)
+	_rect(gate, 6, 18, 4, 12, mid)
+	_line(gate, Vector2(6, 19), Vector2(9, 28), dark)
+	_rect(gate, 6, 18, 1, 12, light)
+	_rect(gate, 23, 18, 8, 3, mid)
+	_rect(gate, 23, 18, 8, 1, light)
+	_outline(gate, Color(0.36, 0.24, 0.2))
+	_save(gate, "gate")
+
+	# Animals: idle, idle, walk, walk, facing right, feet on the bottom row.
+	var duck: Array[Image] = []
+	for f in 4:
+		var img := _img(16, 16)
+		var bob := 1 if f == 1 else 0
+		var white := Color(0.88, 0.87, 0.82)
+		_ellipse(img, Vector2(7, 11), Vector2(5, 3.5), white)
+		_ellipse(img, Vector2(11, 6 + bob), Vector2(2.5, 2.5), white)
+		_rect(img, 10, 7 + bob, 2, 3, white)
+		_line(img, Vector2(4, 11), Vector2(8, 12), Color(0.7, 0.68, 0.64))
+		_rect(img, 13, 6 + bob, 2, 1, Color(0.85, 0.5, 0.2))
+		_px(img, 11, 5 + bob, INK)
+		var step := 1 if f == 3 else 0
+		_px(img, 6 - step, 15, Color(0.85, 0.5, 0.2))
+		_px(img, 8 + step, 15, Color(0.85, 0.5, 0.2))
+		_outline(img, INK)
+		duck.append(img)
+	_frames(duck, "animal_duck")
+
+	var sheep: Array[Image] = []
+	for f in 4:
+		var img := _img(24, 20)
+		var bob := 1 if f == 1 else 0
+		var legs := Color(0.2, 0.18, 0.2)
+		var step := 1 if f == 3 else 0
+		for x: int in [6, 9, 14, 17]:
+			var lift := step if (x == 6 or x == 14) else 0
+			_rect(img, x + (step if x in [9, 17] else 0), 14, 2, 5 - lift, legs)
+		var wool := Color(0.84, 0.82, 0.78)
+		_ellipse(img, Vector2(11, 11), Vector2(8, 5), wool)
+		for c: Vector2 in [Vector2(6, 8), Vector2(11, 6.5), Vector2(15, 8), Vector2(5, 12)]:
+			_ellipse(img, c, Vector2(3, 3), wool)
+		_noise(img, Rect2i(0, 0, 24, 20), 0.04)
+		_ellipse(img, Vector2(19, 9 + bob), Vector2(3, 3), Color(0.24, 0.21, 0.23))
+		_px(img, 17, 6 + bob, Color(0.24, 0.21, 0.23))
+		# A pale eye, slightly too big.
+		_px(img, 20, 8 + bob, Color(0.86, 0.8, 0.5))
+		_outline(img, INK)
+		sheep.append(img)
+	_frames(sheep, "animal_sheep")
+
+	var goat: Array[Image] = []
+	for f in 4:
+		var img := _img(24, 20)
+		var bob := 1 if f == 1 else 0
+		var coat := Color(0.55, 0.5, 0.45)
+		var step := 1 if f == 3 else 0
+		for x: int in [6, 9, 13, 16]:
+			_rect(img, x + (step if x in [9, 16] else 0), 13, 1, 6 - (step if x in [6, 13] else 0), coat.darkened(0.3))
+		_ellipse(img, Vector2(11, 11), Vector2(7, 3.5), coat)
+		_noise(img, Rect2i(0, 0, 24, 20), 0.03)
+		_rect(img, 16, 6 + bob, 2, 5, coat)
+		_ellipse(img, Vector2(19, 6 + bob), Vector2(3, 2.2), coat.lightened(0.05))
+		_line(img, Vector2(18, 4 + bob), Vector2(15, 1 + bob), Color(0.3, 0.27, 0.25))
+		_px(img, 21, 8 + bob, coat.darkened(0.4))
+		_px(img, 21, 9 + bob, coat.darkened(0.4))
+		_px(img, 4, 9, coat.darkened(0.2))
+		# Goat eyes: a flat dark bar on yellow.
+		_px(img, 19, 5 + bob, Color(0.85, 0.72, 0.3))
+		_px(img, 20, 5 + bob, Color(0.1, 0.08, 0.08))
+		_outline(img, INK)
+		goat.append(img)
+	_frames(goat, "animal_goat")
+
+	# What they give.
+	var wool_icon := _img(16, 16)
+	for c: Vector2 in [Vector2(6, 9), Vector2(10, 9), Vector2(8, 6), Vector2(8, 11)]:
+		_ellipse(wool_icon, c, Vector2(3.5, 3), Color(0.88, 0.86, 0.8))
+	_noise(wool_icon, Rect2i(0, 0, 16, 16), 0.05)
+	_icon_edges(wool_icon)
+	_save(wool_icon, "wool")
+
+	var duck_egg := _img(16, 16)
+	_ellipse(duck_egg, Vector2(8, 9), Vector2(4, 5), Color(0.74, 0.85, 0.8))
+	for p: Vector2i in [Vector2i(6, 7), Vector2i(9, 10), Vector2i(7, 12), Vector2i(10, 6)]:
+		_px(duck_egg, p.x, p.y, Color(0.5, 0.58, 0.55))
+	_px(duck_egg, 6, 6, Color(0.9, 0.96, 0.92))
+	_icon_edges(duck_egg)
+	_save(duck_egg, "duck_egg")
+
+	var goat_milk := _img(16, 16)
+	_rect(goat_milk, 5, 6, 6, 8, Color(0.9, 0.88, 0.82))
+	_rect(goat_milk, 6, 3, 4, 3, Color(0.9, 0.88, 0.82))
+	_rect(goat_milk, 6, 2, 4, 1, Color(0.45, 0.32, 0.22))
+	_rect(goat_milk, 5, 9, 6, 3, Color(0.55, 0.5, 0.45))
+	_px(goat_milk, 7, 10, Color(0.85, 0.72, 0.3))
+	_icon_edges(goat_milk)
+	_save(goat_milk, "goat_milk")
+
+	# Crated animals, as sold in the feed store: the animal peeking over a crate.
+	var crates := {
+		"chicken": ["res://assets/Characters/Free Chicken Sprites.png", Rect2i(0, 0, 16, 16)],
+		"cow": ["res://assets/Characters/Free Cow Sprites.png", Rect2i(0, 0, 32, 32)],
+		"duck": ["res://assets/Generated/animal_duck.png", Rect2i(0, 0, 16, 16)],
+		"sheep": ["res://assets/Generated/animal_sheep.png", Rect2i(0, 0, 24, 20)],
+		"goat": ["res://assets/Generated/animal_goat.png", Rect2i(0, 0, 24, 20)],
+	}
+	for name: String in crates:
+		var sheet := Image.load_from_file(ProjectSettings.globalize_path(crates[name][0]))
+		sheet.convert(Image.FORMAT_RGBA8)
+		var frame := sheet.get_region(crates[name][1])
+		frame = frame.get_region(frame.get_used_rect())
+		var fit := minf(14.0 / frame.get_width(), 11.0 / frame.get_height())
+		if fit < 1.0:
+			frame.resize(maxi(1, roundi(frame.get_width() * fit)), maxi(1, roundi(frame.get_height() * fit)), Image.INTERPOLATE_NEAREST)
+		var icon := _img(16, 16)
+		icon.blend_rect(frame, Rect2i(Vector2i.ZERO, frame.get_size()), Vector2i((16 - frame.get_width()) / 2, 11 - frame.get_height()))
+		_rect(icon, 1, 10, 14, 5, mid)
+		_rect(icon, 1, 10, 14, 1, light)
+		_line(icon, Vector2(1, 14), Vector2(14, 11), dark)
+		_rect(icon, 1, 10, 1, 5, dark)
+		_rect(icon, 14, 10, 1, 5, dark)
+		_icon_edges(icon)
+		_save(icon, "crate_" + name)

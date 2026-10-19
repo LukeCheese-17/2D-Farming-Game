@@ -14,6 +14,8 @@ signal passed_out
 signal fainted(reason: String)
 ## A village building changed state.
 signal village_changed
+## Emitted while sleeping, before the new day starts; listeners may add lines to the morning report.
+signal night_passed(report: Array[String])
 
 const STARTING_MONEY := 50
 const STARTING_SEEDS := 5
@@ -88,6 +90,7 @@ var buildings: Array[BuildingData] = [
 	preload("res://data/village/general_store.tres"),
 	preload("res://data/village/flower_shop.tres"),
 	preload("res://data/village/blacksmith.tres"),
+	preload("res://data/village/feed_store.tres"),
 ]
 ## The mine's floors, top to bottom.
 var mine_floors: Array[MineFloorData] = [
@@ -449,6 +452,7 @@ func sleep() -> Array[String]:
 		report.append("Your stomach hurts. You need to eat something.")
 	if water < LOW_NEED:
 		report.append("Your throat is dry. You need water.")
+	night_passed.emit(report)
 	day_changed.emit(day)
 	time_changed.emit(minutes)
 	return report

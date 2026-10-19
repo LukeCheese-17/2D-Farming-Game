@@ -29,6 +29,8 @@
 [ext_resource type="PackedScene" path="res://scene/village/well.tscn" id="26_well"]
 [ext_resource type="PackedScene" path="res://scene/objects/signpost.tscn" id="27_sign"]
 [ext_resource type="PackedScene" path="res://scene/menus/pause_menu.tscn" id="28_pause"]
+[ext_resource type="Resource" path="res://data/village/feed_store.tres" id="29_feed"]
+[ext_resource type="Texture2D" path="res://assets/Generated/wool.png" id="30_wool"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("0_main")
@@ -66,7 +68,7 @@ tile_set = ExtResource("1_tileset")
 [node name="Fences" type="TileMapLayer" parent="Objects"]
 y_sort_enabled = true
 modulate = Color(0.8, 0.75, 0.72, 1)
-tile_map_data = PackedByteArray("AAAaAAkA//////////8bAAkA//////////8cAAkA//////////8dAAkA//////////8eAAkA//////////8fAAkA//////////8gAAkA//////////8hAAkA//////////8aAAoA//////////8hAAoA//////////8aAAsA//////////8hAAsA//////////8aAAwA//////////8hAAwA//////////8aAA0A//////////8hAA0A//////////8aAA4A//////////8bAA4A//////////8cAA4A//////////8eAA4A//////////8fAA4A//////////8gAA4A//////////8hAA4A//////////9EACIABQABAAAAAABFACIABQACAAMAAABGACIABQACAAMAAABHACIABQACAAMAAABIACIABQACAAMAAABJACIABQACAAMAAABKACIABQACAAMAAABLACIABQADAAAAAABEACMABQAAAAEAAABLACMABQAAAAEAAABEACQABQAAAAEAAABLACQABQAAAAEAAABEACUABQAAAAEAAABLACUABQAAAAEAAABEACYABQAAAAEAAABLACYABQAAAAEAAABEACcABQABAAIAAABFACcABQACAAMAAABGACcABQADAAMAAABIACcABQABAAMAAABJACcABQACAAMAAABKACcABQACAAMAAABLACcABQADAAIAAABuADsA//////////9vADsA//////////9wADsA//////////9xADsA//////////9yADsA//////////9zADsA//////////90ADsA//////////91ADsA//////////9uADwA//////////91ADwA//////////9uAD0A//////////91AD0A//////////9uAD4A//////////91AD4A//////////9uAD8A//////////91AD8A//////////9uAEAA//////////9vAEAA//////////9wAEAA//////////9yAEAA//////////9zAEAA//////////90AEAA//////////91AEAA//////////8=")
+tile_map_data = PackedByteArray("AAAaAAkA//////////8bAAkA//////////8cAAkA//////////8dAAkA//////////8eAAkA//////////8fAAkA//////////8gAAkA//////////8hAAkA//////////8aAAoA//////////8hAAoA//////////8aAAsA//////////8hAAsA//////////8aAAwA//////////8hAAwA//////////8aAA0A//////////8hAA0A//////////8aAA4A//////////8bAA4A//////////8cAA4A//////////8eAA4A//////////8fAA4A//////////8gAA4A//////////8hAA4A//////////9EACIABQABAAAAAABFACIABQACAAMAAABGACIABQACAAMAAABHACIABQACAAMAAABIACIABQACAAMAAABJACIABQACAAMAAABKACIABQACAAMAAABLACIABQADAAAAAABEACMABQAAAAEAAABLACMABQAAAAEAAABEACQABQAAAAEAAABLACQABQAAAAEAAABEACUABQAAAAEAAABLACUABQAAAAEAAABEACYABQAAAAEAAABLACYABQAAAAEAAABEACcABQABAAIAAABFACcABQACAAMAAABGACcABQACAAMAAABIACcABQACAAMAAABJACcABQACAAMAAABKACcABQACAAMAAABLACcABQADAAIAAABuADsA//////////9vADsA//////////9wADsA//////////9xADsA//////////9yADsA//////////9zADsA//////////90ADsA//////////91ADsA//////////9uADwA//////////91ADwA//////////9uAD0A//////////91AD0A//////////9uAD4A//////////91AD4A//////////9uAD8A//////////91AD8A//////////9uAEAA//////////9vAEAA//////////9wAEAA//////////9yAEAA//////////9zAEAA//////////90AEAA//////////91AEAA//////////9HACcACAAAAAAAAAA=")
 tile_set = ExtResource("1_tileset")
 
 [node name="Crops" type="Node2D" parent="Objects"]
@@ -81,17 +83,14 @@ position = Vector2(872, 566)
 [node name="Chicken1" parent="Objects" instance=ExtResource("8_animal")]
 position = Vector2(1124, 582)
 data = ExtResource("9_chicken")
-wander_rect = Rect2(1110, 568, 84, 50)
 
 [node name="Chicken2" parent="Objects" instance=ExtResource("8_animal")]
 position = Vector2(1172, 604)
 data = ExtResource("9_chicken")
-wander_rect = Rect2(1110, 568, 84, 50)
 
 [node name="Cow" parent="Objects" instance=ExtResource("8_animal")]
 position = Vector2(1152, 576)
 data = ExtResource("10_cow")
-wander_rect = Rect2(1110, 568, 84, 50)
 
 [node name="HouseInterior" parent="Objects" instance=ExtResource("6_interior")]
 position = Vector2(2400, 64)
@@ -121,6 +120,11 @@ sign_icon = ExtResource("24_anvil")
 
 [node name="BoardedHouse" parent="Objects" instance=ExtResource("18_building")]
 position = Vector2(424, 912)
+
+[node name="FeedStore" parent="Objects" instance=ExtResource("18_building")]
+position = Vector2(520, 848)
+data = ExtResource("29_feed")
+sign_icon = ExtResource("30_wool")
 
 [node name="QuestBoard" parent="Objects" instance=ExtResource("25_board")]
 position = Vector2(336, 776)
@@ -155,7 +159,7 @@ script = ExtResource("3_highlight")
 player = NodePath("../Objects/Player")
 farm = NodePath("../Farm")
 
-[node name="Farm" type="Node2D" parent="." node_paths=PackedStringArray("water_layer", "grass_layer", "paths_layer", "tilled_layer", "wet_layer", "nature_layer", "crops_parent")]
+[node name="Farm" type="Node2D" parent="." node_paths=PackedStringArray("water_layer", "grass_layer", "paths_layer", "tilled_layer", "wet_layer", "nature_layer", "crops_parent", "fences_layer", "animals_parent")]
 script = ExtResource("2_farm")
 water_layer = NodePath("../Ground/Water")
 grass_layer = NodePath("../Ground/Grass")
@@ -164,6 +168,8 @@ tilled_layer = NodePath("../Ground/TilledDirt")
 wet_layer = NodePath("../Ground/WetSoil")
 nature_layer = NodePath("../Objects/Nature")
 crops_parent = NodePath("../Objects/Crops")
+fences_layer = NodePath("../Objects/Fences")
+animals_parent = NodePath("../Objects")
 pond_area = Rect2i(17, 8, 15, 11)
 river_area = Rect2i(84, 0, 12, 84)
 woods_area = Rect2i(5, 4, 100, 22)

@@ -139,10 +139,14 @@ The mine (MIN) is the one exception: it has enemies.
 
 | ID | Requirement |
 |----|-------------|
-| ANM-1 | The player raises farm animals: at least chickens and cows (sprites exist in `assets/Characters`). |
-| ANM-2 | Animals live in a fenced area or coop and wander around it. |
-| ANM-3 | Animals produce goods once per day (chickens → eggs, cows → milk), which the player collects with the hand. |
+| ANM-1 | The player raises farm animals: chickens, ducks, goats, sheep and cows. The farm starts with a fenced pen holding two chickens and a cow. |
+| ANM-2 | Animals live in a fenced pen and wander around inside it, never through a fence. |
+| ANM-3 | Animals produce goods once per day (chickens → eggs, ducks → duck eggs, goats → goat milk, sheep → wool, cows → milk), which the player collects with the hand. |
 | ANM-4 | Animal products can be shipped and sold, and can be asked for in quests. |
+| ANM-5 | The player builds pens from fences and gates bought at the feed store (or made there from wood). Using a fence or gate on open grass puts it up, fences join up with their neighbours, and the axe takes a fence or gate back down. A pen is any area the fences close off. |
+| ANM-6 | Animals are bought crated at the feed store and let out by using the crate inside a closed pen. |
+| ANM-7 | Gates open and shut with the use key. If a pen's gate is left open overnight (or its fence has a gap), each animal in it has a low chance (15%) of being gone in the morning, with no explanation. |
+| ANM-8 | Animals, fences and gates are saved. |
 
 ## 14. Technical requirements
 
@@ -202,6 +206,7 @@ The mine (MIN) is the one exception: it has enemies.
 | VIL-2 | Blacksmith: makes better tools using materials from the mine. |
 | VIL-3 | Flower shop. |
 | VIL-4 | General store: a proper seed shop with a wider variety of seeds. |
+| VIL-5 | Feed store: sells fences, gates and crated animals, and makes fences from wood. |
 
 ## 20. Quests
 
@@ -252,7 +257,7 @@ Other choices made while building:
 - **Needs:** food and water drop every 10 minutes and overnight. Below 20 you walk slower; at 0 you faint and wake up the next morning. Eat by using a food item; drink by using the empty hand (or any non-tool) on water, or at the village well.
 - **Health:** only matters in the mine. Fainting there means waking up at home the next morning with 10% of your money gone (max 200g). Sleeping restores health.
 - **Mine:** five floors (Damp Tunnels, Root Hollow, Bone Gallery, Frozen Dark, Red Deep), dug out fresh each visit; a ladder down sits at the far end of each floor. The lift at the entrance goes to any floor already reached. A rusty sword waits on floor 1 the first time. Something waits at the bottom of floor 5.
-- **Village:** rebuilding a building costs materials + money and finishes overnight ("nobody heard any hammering"). General store = seeds and food; flower shop = flower seeds and bouquets; blacksmith = copper/iron/gold axes, pickaxes and swords (the new tool replaces the old one in its slot). A fourth house stays boarded up.
+- **Village:** rebuilding a building costs materials + money and finishes overnight ("nobody heard any hammering"). General store = seeds and food; flower shop = flower seeds and bouquets; blacksmith = copper/iron/gold axes, pickaxes and swords (the new tool replaces the old one in its slot); feed store = fences, gates and animals. A fourth house stays boarded up.
 - **Quest board:** one main quest from `data/quests/main` plus two daily notes from `data/quests`, refreshed each morning. Items are handed in at the board. Nobody is ever seen pinning them.
 - **Saving:** autosaves every morning to the current slot; the pause menu also saves. A save from before slots existed becomes slot 1.
 

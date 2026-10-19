@@ -142,23 +142,35 @@ func _move_inside(target: Vector2) -> void:
 
 ## The world part of the save: farm tiles and crops, animals, where the player is.
 func get_save_data() -> Dictionary:
-	var animals := {}
+	var animals := []
 	for animal: Animal in get_tree().get_nodes_in_group("animals"):
-		animals[String(animal.name)] = animal.has_product
+		animals.append([animal.data.resource_path, animal.global_position.x, animal.global_position.y, animal.has_product, String(animal.name)])
 	var where := "house" if _player.indoors else ("mine" if _player.in_mine else "outside")
 	return {
 		"farm": _farm.get_save_data(),
-		"animals": animals,
+		"animal_list": animals,
 		"player": {"where": where, "x": _player.global_position.x, "y": _player.global_position.y},
 	}
 
 
 func _apply_save_data(data: Dictionary) -> void:
 	_farm.load_save_data(data.get("farm", {}))
-	var animals: Dictionary = data.get("animals", {})
-	for animal: Animal in get_tree().get_nodes_in_group("animals"):
-		if animals.has(String(animal.name)):
-			animal.set_has_product(bool(animals[String(animal.name)]))
+	if data.has("animal_list"):
+		for animal: Animal in get_tree().get_nodes_in_group("animals"):
+			animal.remove_from_group("animals")
+			animal.get_parent().remove_child(animal)
+			animal.queue_free()
+		for entry: Array in data.animal_list:
+			var animal_data := load(entry[0]) as AnimalData
+			if animal_data:
+				_farm.spawn_animal(animal_data, Vector2(entry[1], entry[2]), bool(entry[3]), String(entry[4]) if entry.size() > 4 else "")
+	else:
+		# Saves from before bought animals: the starter animals, by name.
+		var animals: Dictionary = data.get("animals", {})
+		for animal: Animal in get_tree().get_nodes_in_group("animals"):
+			if animals.has(String(animal.name)):
+				animal.set_has_product(bool(animals[String(animal.name)]))
+	_farm.refresh_pens()
 	var player: Dictionary = data.get("player", {})
 	match player.get("where", "house"):
 		"outside":

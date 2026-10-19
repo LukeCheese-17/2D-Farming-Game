@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ShopData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/fence.tres" id="1"]
+[ext_resource type="Resource" path="res://data/items/gate.tres" id="2"]
+[ext_resource type="Resource" path="res://data/items/crate_chicken.tres" id="3"]
+[ext_resource type="Resource" path="res://data/items/crate_duck.tres" id="4"]
+[ext_resource type="Resource" path="res://data/items/crate_goat.tres" id="5"]
+[ext_resource type="Resource" path="res://data/items/crate_sheep.tres" id="6"]
+[ext_resource type="Resource" path="res://data/items/crate_cow.tres" id="7"]
+[ext_resource type="Resource" path="res://data/village/recipes/fence.tres" id="8"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/data/shop_data.gd" id="11"]
+
+[resource]
+script = ExtResource("11")
+title = "Feed store"
+stock = Array[ExtResource("9")]([ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
+recipes = Array[ExtResource("10")]([ExtResource("8")])
+greeting = "Sacks of feed, coils of wire, crates stacked out back. The animals in them are very quiet. A note on the counter: PAY FOR WHAT YOU TAKE. SHUT THE GATES."

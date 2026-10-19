@@ -1,7 +1,8 @@
 class_name AnimalData
 extends Resource
 ## Defines one kind of farm animal. To add an animal, create a .tres from this
-## script in data/animals and place an Animal scene using it in the pen.
+## script in data/animals, plus an item with `animal` set to it that a shop sells
+## (the player lets it out in a pen).
 
 @export var display_name: String
 ## Needs "idle" and "walk" animations, with the sprites facing right.

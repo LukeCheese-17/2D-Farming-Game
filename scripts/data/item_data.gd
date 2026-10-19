@@ -3,6 +3,8 @@ extends Resource
 ## One kind of item that can sit in an inventory slot: tools, seeds, produce,
 ## fish, animal products, materials, food. Create a .tres from this script in data/items to add one.
 
+enum Placeable { NONE, FENCE, GATE }
+
 @export var id: StringName
 @export var display_name: String
 @export var icon: Texture2D
@@ -26,6 +28,12 @@ extends Resource
 @export var water := 0
 ## How much health eating one gives back.
 @export var health := 0
+
+@export_group("Placing")
+## Fences and gates are put up on the farm to make pens (ANM-5).
+@export var placeable := Placeable.NONE
+## Set for a crated animal: using it inside a closed pen lets the animal out there (ANM-6).
+@export var animal: AnimalData
 
 
 func is_edible() -> bool:

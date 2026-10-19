@@ -2,11 +2,13 @@ class_name Farm
 extends WorldArea
 ## The surface map: tilling, planting, watering, daily growth and harvesting on the
 ## farm; chopping trees and breaking rocks; picking berries, apples and mushrooms
-## in the woods. Also adds collision so the player can't walk into the water.
+## in the woods; fences, gates and the animals in their pens. Also adds collision
+## so the player can't walk into the water.
 
-enum Action { NONE, TILL, WATER, PLANT, FISH, COLLECT, CHOP, MINE, CLEAR }
+enum Action { NONE, TILL, WATER, PLANT, FISH, COLLECT, CHOP, MINE, CLEAR, BUILD, TAKE_DOWN, GATE, RELEASE }
 
 const CROP_SCENE := preload("res://scene/crops/crop.tscn")
+const ANIMAL_SCENE := preload("res://scene/animals/animal.tscn")
 ## Terrain set and terrain index of "Tilled dirt Terrain" in game_tile_set.tres.
 const DIRT_TERRAIN_SET := 0
 const DIRT_TERRAIN := 1
@@ -64,6 +66,17 @@ const BERRIES := preload("res://data/items/berries.tres")
 const APPLE := preload("res://data/items/apple.tres")
 const DUSK_CAP := preload("res://data/items/dusk_cap.tres")
 const RED_CAP := preload("res://data/items/red_cap.tres")
+const FENCE := preload("res://data/items/fence.tres")
+const GATE := preload("res://data/items/gate.tres")
+
+## Chance, each night, that an animal goes missing from a pen with an open gate
+## or a gap in the fence (ANM-7).
+const ESCAPE_CHANCE := 0.15
+const ESCAPE_LINES: Array[String] = [
+	"The pen was left open all night. Your %s is gone. There are no tracks, not even its own.",
+	"Your %s is gone. The gate is still open, creaking. You don't remember it creaking before.",
+	"One %s is missing. Whatever took it latched the open gate back against the fence. Neatly.",
+]
 
 @export var water_layer: TileMapLayer
 @export var grass_layer: TileMapLayer
@@ -75,6 +88,10 @@ const RED_CAP := preload("res://data/items/red_cap.tres")
 @export var nature_layer: TileMapLayer
 ## Parent for crop nodes; should be y-sorted together with the player.
 @export var crops_parent: Node2D
+## Fences and gates (ANM-5); the starter pen is painted in the scene.
+@export var fences_layer: TileMapLayer
+## Where animals are added; y-sorted with the player.
+@export var animals_parent: Node2D
 ## Cells of the pond and the river (other water is the lake around the land).
 @export var pond_area: Rect2i
 @export var river_area: Rect2i
@@ -87,11 +104,15 @@ var _crops: Dictionary[Vector2i, Crop] = {}
 var _hits: Dictionary[Vector2i, int] = {}
 ## Picked bushes and trees: cell -> [tile to put back, day it comes back].
 var _regrow: Dictionary[Vector2i, Array] = {}
+var pens: Pens
 
 
 func _ready() -> void:
+	pens = Pens.new(fences_layer, is_land)
 	GameState.day_changed.connect(_on_day_changed)
+	GameState.night_passed.connect(_on_night_passed)
 	_build_water_collision()
+	refresh_pens.call_deferred()
 
 
 func world_to_cell(world_position: Vector2) -> Vector2i:
@@ -146,6 +167,21 @@ func can_water(cell: Vector2i) -> bool:
 
 func can_harvest(cell: Vector2i) -> bool:
 	return _crops.has(cell) and _crops[cell].is_ripe()
+
+
+## Grass the player and animals can stand on (not water or bridges).
+func is_land(cell: Vector2i) -> bool:
+	return grass_layer.get_cell_source_id(cell) != -1
+
+
+## Fences and gates go on open grass or paths, not on soil, plants or animals.
+func can_build(cell: Vector2i) -> bool:
+	return is_land(cell) and not pens.is_fence(cell) and not is_tilled(cell) \
+		and nature_layer.get_cell_source_id(cell) == -1 and not _has_body_at(cell) and _animal_at(cell) == null
+
+
+func can_release(cell: Vector2i) -> bool:
+	return is_land(cell) and not pens.is_fence(cell) and not _has_body_at(cell)
 
 
 func get_water(cell: Vector2i) -> Water:
@@ -219,6 +255,15 @@ func get_action(item: ItemData, cell: Vector2i) -> Action:
 		return Action.COLLECT
 	var tool := item.tool if item else Tools.Type.NONE
 	var tile := get_nature(cell)
+	if pens.is_fence(cell):
+		# The axe takes a fence down; anything else opens or shuts a gate.
+		if tool == Tools.Type.AXE:
+			return Action.TAKE_DOWN
+		return Action.GATE if pens.is_gate(cell) else Action.NONE
+	if item and item.placeable != ItemData.Placeable.NONE:
+		return Action.BUILD if can_build(cell) else Action.NONE
+	if item and item.animal:
+		return Action.RELEASE if can_release(cell) else Action.NONE
 	match tool:
 		Tools.Type.HOE:
 			if tile in DECOR:
@@ -249,7 +294,7 @@ func get_animation(item: ItemData, cell: Vector2i) -> String:
 			return "tilling_" if item else ""
 		Action.WATER:
 			return "watering_"
-		Action.CHOP, Action.MINE:
+		Action.CHOP, Action.MINE, Action.TAKE_DOWN:
 			return "chopping_"
 	return ""
 
@@ -272,6 +317,16 @@ func use(item: ItemData, cell: Vector2i) -> void:
 			_break_rock(cell, item)
 		Action.CLEAR:
 			nature_layer.erase_cell(cell)
+		Action.BUILD:
+			if GameState.inventory.remove(item):
+				pens.place(cell, item.placeable)
+				refresh_pens()
+		Action.TAKE_DOWN:
+			_take_down(cell)
+		Action.GATE:
+			_toggle_gate(cell)
+		Action.RELEASE:
+			_release(cell, item)
 
 
 func _plant(cell: Vector2i, seed: ItemData) -> void:
@@ -330,6 +385,88 @@ func _collect(cell: Vector2i) -> void:
 	if _give(crop.data.produce, crop.data.harvest_amount):
 		_crops.erase(cell)
 		crop.queue_free()
+
+
+# --- Fences, gates and animals (ANM-5..ANM-8) ---
+
+func _take_down(cell: Vector2i) -> void:
+	var item := GATE if pens.is_gate(cell) else FENCE
+	if not GameState.inventory.has_room_for(item):
+		UI.post_message("Your bag is full")
+		return
+	pens.remove(cell)
+	_give(item, 1)
+	refresh_pens()
+
+
+func _toggle_gate(cell: Vector2i) -> void:
+	var open := pens.is_gate_open(cell)
+	if open and _has_body_at(cell):
+		UI.post_message("Something is in the way")
+		return
+	pens.set_gate_open(cell, not open)
+
+
+## Lets a crated animal out, as long as the spot is inside a fenced-in pen.
+func _release(cell: Vector2i, item: ItemData) -> void:
+	var pen := pens.find_pen(cell)
+	if not pen.closed:
+		UI.post_message("It needs a fenced-in pen")
+		return
+	if not GameState.inventory.remove(item):
+		return
+	var animal := spawn_animal(item.animal, cell_to_world(cell), false)
+	animal.set_pen(self, pen.cells)
+	UI.post_message("The %s noses around its new pen" % item.animal.display_name.to_lower())
+	if pen.gate_open:
+		UI.post_message("The gate is open")
+
+
+func spawn_animal(animal_data: AnimalData, at: Vector2, has_product := true, animal_name := "") -> Animal:
+	var animal: Animal = ANIMAL_SCENE.instantiate()
+	animal.name = animal_name if animal_name != "" else animal_data.display_name
+	animal.data = animal_data
+	animal.has_product = has_product
+	animals_parent.add_child(animal, true)
+	animal.global_position = at
+	return animal
+
+
+## Tells every animal which cells it may wander over: its pen, or the ground
+## around it when the fence no longer closes it in.
+func refresh_pens() -> void:
+	var known: Dictionary[Vector2i, Array] = {}
+	for animal: Animal in get_tree().get_nodes_in_group("animals"):
+		var cell := world_to_cell(animal.global_position)
+		if not known.has(cell):
+			var pen := pens.find_pen(cell)
+			if pen.closed:
+				for pen_cell: Vector2i in pen.cells:
+					known[pen_cell] = pen.cells
+			else:
+				known[cell] = pens.cells_near(cell, 3)
+		var cells: Array[Vector2i] = []
+		cells.assign(known[cell])
+		animal.set_pen(self, cells)
+
+
+func _animal_at(cell: Vector2i) -> Animal:
+	var center := cell_to_world(cell)
+	for animal: Animal in get_tree().get_nodes_in_group("animals"):
+		if animal.global_position.distance_to(center) < 12.0:
+			return animal
+	return null
+
+
+## Animals in a pen with an open gate (or a gap in the fence) may be gone by morning.
+func _on_night_passed(report: Array[String]) -> void:
+	for animal: Animal in get_tree().get_nodes_in_group("animals"):
+		var pen := pens.find_pen(world_to_cell(animal.global_position))
+		if (pen.closed and not pen.gate_open) or randf() >= ESCAPE_CHANCE:
+			continue
+		report.append(ESCAPE_LINES.pick_random() % animal.data.display_name.to_lower())
+		animal.remove_from_group("animals")
+		animal.queue_free()
 
 
 ## One swing at a tree or stump. Trees fall into stumps (left where the trunk stood),
@@ -445,6 +582,7 @@ func get_save_data() -> Dictionary:
 		"crops": crops,
 		"nature": nature,
 		"regrow": regrow,
+		"fences": pens.get_save_data(),
 	}
 
 
@@ -481,6 +619,9 @@ func load_save_data(data: Dictionary) -> void:
 	_regrow.clear()
 	for entry: Array in data.get("regrow", []):
 		_regrow[Vector2i(entry[0], entry[1])] = [Vector2i(entry[2], entry[3]), int(entry[4])]
+	# Saves from before pens keep the starter pen from the scene.
+	if data.has("fences"):
+		pens.load_save_data(data.fences)
 
 
 func _cells_to_list(cells: Array) -> Array:

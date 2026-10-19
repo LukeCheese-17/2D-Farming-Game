@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3]
+
+[ext_resource type="Resource" path="res://data/items/wood.tres" id="1"]
+[ext_resource type="Resource" path="res://data/items/stone.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3"]
+[ext_resource type="Resource" path="res://data/village/feed_store_shop.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/data/building_data.gd" id="5"]
+
+[resource]
+script = ExtResource("5")
+id = &"feed_store"
+display_name = "Feed store"
+ruin_text = "Empty hooks, a rusted bell, a heap of rotten feed sacks. Someone scratched a tally into the door frame. It stops at forty."
+materials = Array[ExtResource("3")]([ExtResource("1"), ExtResource("2")])
+amounts = Array[int]([25, 10])
+price = 150
+shop = ExtResource("4")
