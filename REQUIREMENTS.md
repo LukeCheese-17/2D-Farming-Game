@@ -159,6 +159,7 @@ The mine (MIN) is the one exception: it has enemies.
 | TEC-5 | Input uses named actions in the Input Map (`move_up`, `move_down`, `move_left`, `move_right`, `use_tool`, `interact`, `hotbar_1`…`hotbar_10`, `hotbar_next`, `hotbar_previous`, `backpack`), not hard-coded keys. |
 | TEC-6 | Characters and objects y-sort so the player can walk behind trees and in front of them. |
 | TEC-7 | The game does not use exclusive fullscreen: it runs in a window or borderless fullscreen, so the player can alt-tab out freely. |
+| TEC-8 | Nothing is tied to frame rate: movement, animation, the clock, food/water drain, timers, cues and fades all run on elapsed real time (`delta`), so the game plays at the same speed at 30, 60 or 144 FPS. Smoothing uses `1 - exp(-delta * k)`, never per-frame counters. |
 
 ## 15. Map revamp
 

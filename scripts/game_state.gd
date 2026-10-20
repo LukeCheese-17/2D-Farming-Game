@@ -168,15 +168,15 @@ func new_game() -> void:
 func _process(delta: float) -> void:
 	if not clock_running or UI.is_blocking() or minutes >= PASS_OUT_TIME:
 		return
+	# Runs on real seconds, not frames; a long frame catches up on every tick it covered.
 	_tick_time += delta
-	if _tick_time < SECONDS_PER_TICK:
-		return
-	_tick_time -= SECONDS_PER_TICK
-	minutes += MINUTES_PER_TICK
-	time_changed.emit(minutes)
-	use_needs(FOOD_PER_TICK, WATER_PER_TICK)
-	if minutes >= PASS_OUT_TIME:
-		passed_out.emit()
+	while _tick_time >= SECONDS_PER_TICK and minutes < PASS_OUT_TIME:
+		_tick_time -= SECONDS_PER_TICK
+		minutes += MINUTES_PER_TICK
+		time_changed.emit(minutes)
+		use_needs(FOOD_PER_TICK, WATER_PER_TICK)
+		if minutes >= PASS_OUT_TIME:
+			passed_out.emit()
 
 
 ## "14:20"-style text for the current time.

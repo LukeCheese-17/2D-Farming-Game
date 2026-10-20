@@ -38,5 +38,5 @@ func get_target_density() -> float:
 
 
 func _process(delta: float) -> void:
-	_density = lerpf(_density, get_target_density(), minf(1.0, delta * BLEND_SPEED))
+	_density = lerpf(_density, get_target_density(), 1.0 - exp(-delta * BLEND_SPEED))
 	_material.set_shader_parameter("density", _density)

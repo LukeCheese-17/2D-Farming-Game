@@ -34,7 +34,7 @@ func _process(delta: float) -> void:
 	if player.in_mine:
 		target = MINE_TINT
 		darkness = 1.0
-	_tint = _tint.lerp(target, minf(1.0, delta * BLEND_SPEED))
+	_tint = _tint.lerp(target, 1.0 - exp(-delta * BLEND_SPEED))
 	_material.set_shader_parameter("tint", _tint)
 	_material.set_shader_parameter("desaturation", lerpf(0.3, 0.5, darkness))
 	_material.set_shader_parameter("vignette", lerpf(0.35, 0.8, darkness))

@@ -159,7 +159,7 @@ func _update_figure(delta: float) -> void:
 	if _echo_time <= 0.0 or player.indoors or player.in_mine or to_figure.normalized().dot(player.facing) > FIGURE_LOOK_DOT:
 		_figure.hide()
 		return
-	_figure.global_position = _figure.global_position.lerp(_behind_player(), minf(delta * 2.5, 1.0))
+	_figure.global_position = _figure.global_position.lerp(_behind_player(), 1.0 - exp(-delta * 2.5))
 	# Never quite in focus: it fades in and wavers.
 	_figure.modulate.a = minf(_figure.modulate.a + delta * 0.3, FIGURE_ALPHA)
 	_figure.queue_redraw()

@@ -50,6 +50,7 @@ var _ring := Ring.NONE
 var _intro_call_at := -1
 var _silent_call_at := -1
 var _ring_started := 0
+var _ring_time := 0.0
 
 @onready var _sprite: Sprite2D = $Phone
 @onready var _marks: Sprite2D = $RingMarks
@@ -68,11 +69,12 @@ func is_ringing() -> bool:
 	return _ring != Ring.NONE
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if is_ringing():
-		# Rattle while ringing.
-		_sprite.position.x = -0.5 + float(Engine.get_process_frames() / 3 % 2)
-		_marks.visible = Engine.get_process_frames() / 15 % 2 == 0
+		# Rattle while ringing: shake every 0.05 s, blink the marks every 0.25 s.
+		_ring_time += delta
+		_sprite.position.x = -0.5 + float(int(_ring_time / 0.05) % 2)
+		_marks.visible = int(_ring_time / 0.25) % 2 == 0
 
 
 func _schedule_calls() -> void:
