@@ -1,4 +1,4 @@
-# Requirements — 2D Creepy Cozy Farm
+# Requirements — Hollow Acre
 
 A top-down 2D farming game built in Godot 4.6 (GDScript) with a **horror atmosphere and no monster**.
 Fired from a dead-end job and left homeless, you spend the last of your money on cheap land: a

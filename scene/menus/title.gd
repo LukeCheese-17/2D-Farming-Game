@@ -38,7 +38,7 @@ func _ready() -> void:
 	add_child(_eyes)
 
 	var title := Label.new()
-	title.text = "Creepy Cozy Farm"
+	title.text = "Hollow Acre"
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", UITheme.TEXT)
 	title.add_theme_constant_override("outline_size", 6)

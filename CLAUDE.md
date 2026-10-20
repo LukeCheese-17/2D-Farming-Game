@@ -1,4 +1,4 @@
-# 2D Creepy Cozy Farm â€” notes for Claude
+# Hollow Acre â€” notes for Claude
 
 Godot 4.6 GDScript, top-down pixel-art farming game with a no-monster horror mood.
 `REQUIREMENTS.md` is the source of truth for features (IDs like FSH-2, ATM-3).
