@@ -111,12 +111,15 @@ func _show_main_menu(focus := -1) -> void:
 	var any_save := range(SaveGame.SLOTS).any(func(slot: int) -> bool: return SaveGame.slot_exists(slot))
 	if focus < 0:
 		focus = 1 if any_save else 0
-	_set_buttons("", [
+	var entries := [
 		["New Game", _show_slots.bind(true)],
 		["Continue", _show_slots.bind(false), not any_save],
 		["Options", _show_options],
-		["Quit", get_tree().quit],
-	], focus)
+	]
+	# A browser tab can't be closed by the game, so Quit only exists on desktop.
+	if not OS.has_feature("web"):
+		entries.append(["Quit", get_tree().quit])
+	_set_buttons("", entries, focus)
 
 
 ## Lists the three slots, for a new game or for loading.
