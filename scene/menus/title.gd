@@ -37,16 +37,15 @@ func _ready() -> void:
 	_eyes.modulate = Color(1, 0.9, 0.7, 0.0)
 	add_child(_eyes)
 
-	# Placeholder name until the game has a real one.
 	var title := Label.new()
-	title.text = "GAME"
+	title.text = "Creepy Cozy Farm"
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", UITheme.TEXT)
 	title.add_theme_constant_override("outline_size", 6)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	title.position = Vector2(-160, 56)
-	title.size = Vector2(320, 44)
+	title.position = Vector2(-300, 56)
+	title.size = Vector2(600, 44)
 	add_child(title)
 
 	var panel := PanelContainer.new()
