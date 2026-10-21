@@ -16,6 +16,10 @@ const DIRT_TERRAIN := 1
 ## is drawn in front of it, and behind the crops in the row below.
 const CROP_OFFSET := Vector2(0, -7)
 const NATURE_SOURCE := 4
+## assets/Generated/path.png: column = which sides join another path or bridge
+## (1 up, 2 right, 4 down, 8 left), row = variant.
+const PATH_SOURCE := 6
+const PATH_SIDES: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 
 # Tiles in assets/Generated/nature.png ("Basic Grass Biom things 1.png" redrawn in the dead tree style).
 const BIG_TREE := Vector2i(1, 0)
@@ -113,6 +117,7 @@ func _ready() -> void:
 	GameState.day_changed.connect(_on_day_changed)
 	GameState.night_passed.connect(_on_night_passed)
 	_build_water_collision()
+	_shape_paths()
 	refresh_pens.call_deferred()
 
 
@@ -543,6 +548,20 @@ func _has_body_at(cell: Vector2i) -> bool:
 	var query := PhysicsPointQueryParameters2D.new()
 	query.position = cell_to_world(cell)
 	return not grass_layer.get_world_2d().direct_space_state.intersect_point(query, 1).is_empty()
+
+
+## The map paints plain path tiles (variant in the atlas column); give each one
+## the shape that rounds it off wherever it doesn't join more path.
+func _shape_paths() -> void:
+	var variants: Dictionary[Vector2i, int] = {}
+	for cell in paths_layer.get_used_cells_by_id(PATH_SOURCE):
+		variants[cell] = paths_layer.get_cell_atlas_coords(cell).x % 4
+	for cell in variants:
+		var sides := 0
+		for i in PATH_SIDES.size():
+			if paths_layer.get_cell_source_id(cell + PATH_SIDES[i]) != -1:
+				sides |= 1 << i
+		paths_layer.set_cell(cell, PATH_SOURCE, Vector2i(sides, variants[cell]))
 
 
 ## Blocks water along the shores (the player can't get any further out than that).

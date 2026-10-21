@@ -1031,14 +1031,25 @@ func _make_props() -> void:
 	_outline(scaffold, INK)
 	_save(scaffold, "scaffold")
 
-	var path := _img(64, 16)
+	var plain := _img(64, 16)
 	for v in 4:
-		_rect(path, v * 16, 0, 16, 16, Color(0.52, 0.43, 0.32))
-		_noise(path, Rect2i(v * 16, 0, 16, 16), 0.035)
+		_rect(plain, v * 16, 0, 16, 16, Color(0.52, 0.43, 0.32))
+		_noise(plain, Rect2i(v * 16, 0, 16, 16), 0.035)
 		for i in 4 + v:
-			path.set_pixel(v * 16 + randi_range(0, 15), randi_range(0, 15), Color(0.4, 0.33, 0.25))
+			plain.set_pixel(v * 16 + randi_range(0, 15), randi_range(0, 15), Color(0.4, 0.33, 0.25))
 		if v == 3:
-			_ellipse(path, Vector2(v * 16 + 9, 8), Vector2(2, 1.5), Color(0.6, 0.58, 0.55))
+			_ellipse(plain, Vector2(v * 16 + 9, 8), Vector2(2, 1.5), Color(0.6, 0.58, 0.55))
+	# Column = which sides join more path (1 up, 2 right, 4 down, 8 left), row = variant.
+	var path := _img(256, 64)
+	for v in 4:
+		for sides in 16:
+			for y in 16:
+				for x in 16:
+					var edge := _path_edge(x, y, sides)
+					if edge < 0:
+						continue
+					var color := plain.get_pixel(v * 16 + x, y)
+					path.set_pixel(sides * 16 + x, v * 16 + y, color.darkened(0.18) if edge == 1 else color)
 	_save(path, "path")
 
 	var anvil := _img(16, 16)
@@ -1047,6 +1058,33 @@ func _make_props() -> void:
 	_rect(anvil, 4, 12, 8, 2, Color(0.35, 0.36, 0.4))
 	_icon_edges(anvil)
 	_save(anvil, "anvil")
+
+
+## For a pixel of a path tile: -1 cut away, 1 the darker edge, 0 inside. Sides
+## that don't join more path get an edge, and corners between two of them are rounded.
+func _path_edge(x: int, y: int, sides: int) -> int:
+	const RADIUS := 5.0
+	var open_up := sides & 1 == 0
+	var open_right := sides & 2 == 0
+	var open_down := sides & 4 == 0
+	var open_left := sides & 8 == 0
+	var corner := Vector2(-1, -1)
+	if x < RADIUS and y < RADIUS and open_left and open_up:
+		corner = Vector2(RADIUS, RADIUS)
+	elif x >= 16 - RADIUS and y < RADIUS and open_right and open_up:
+		corner = Vector2(16 - RADIUS, RADIUS)
+	elif x >= 16 - RADIUS and y >= 16 - RADIUS and open_right and open_down:
+		corner = Vector2(16 - RADIUS, 16 - RADIUS)
+	elif x < RADIUS and y >= 16 - RADIUS and open_left and open_down:
+		corner = Vector2(RADIUS, 16 - RADIUS)
+	if corner.x >= 0.0:
+		var distance := Vector2(x + 0.5, y + 0.5).distance_to(corner)
+		if distance > RADIUS:
+			return -1
+		return 1 if distance > RADIUS - 1.2 else 0
+	if (open_up and y == 0) or (open_down and y == 15) or (open_left and x == 0) or (open_right and x == 15):
+		return 1
+	return 0
 
 
 # --- HUD icons ---
