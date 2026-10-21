@@ -12,8 +12,9 @@ const ANIMAL_SCENE := preload("res://scene/animals/animal.tscn")
 ## Terrain set and terrain index of "Tilled dirt Terrain" in game_tile_set.tres.
 const DIRT_TERRAIN_SET := 0
 const DIRT_TERRAIN := 1
-## Crops are placed slightly below the tile center so they y-sort by their base.
-const CROP_OFFSET := Vector2(0, 6)
+## Crops y-sort by the top of their tile, so the player walking through a crop
+## is drawn in front of it, and behind the crops in the row below.
+const CROP_OFFSET := Vector2(0, -7)
 const NATURE_SOURCE := 4
 
 # Tiles in assets/Generated/nature.png ("Basic Grass Biom things 1.png" redrawn in the dead tree style).
@@ -312,9 +313,10 @@ func use(item: ItemData, cell: Vector2i) -> void:
 			_collect(cell)
 		Action.TILL:
 			tilled_layer.set_cells_terrain_connect([cell], DIRT_TERRAIN_SET, DIRT_TERRAIN)
+			_refresh_wet()
 		Action.WATER:
 			_watered[cell] = true
-			wet_layer.set_cells_terrain_connect([cell], DIRT_TERRAIN_SET, DIRT_TERRAIN)
+			_refresh_wet()
 		Action.PLANT:
 			_plant(cell, item)
 		Action.CHOP:
@@ -333,6 +335,14 @@ func use(item: ItemData, cell: Vector2i) -> void:
 			_toggle_gate(cell)
 		Action.RELEASE:
 			_release(cell, item)
+
+
+## Watered soil is drawn with the same tile as the tilled soil under it, so it
+## keeps the patch's shape instead of making blobs of its own.
+func _refresh_wet() -> void:
+	wet_layer.clear()
+	for cell in _watered:
+		wet_layer.set_cell(cell, tilled_layer.get_cell_source_id(cell), tilled_layer.get_cell_atlas_coords(cell))
 
 
 func _plant(cell: Vector2i, seed: ItemData) -> void:
@@ -597,8 +607,7 @@ func load_save_data(data: Dictionary) -> void:
 	var watered: Array[Vector2i] = _list_to_cells(data.get("watered", []))
 	for cell in watered:
 		_watered[cell] = true
-	if not watered.is_empty():
-		wet_layer.set_cells_terrain_connect(watered, DIRT_TERRAIN_SET, DIRT_TERRAIN)
+	_refresh_wet()
 	for entry: Array in data.get("crops", []):
 		var crop_data := load(entry[2]) as CropData
 		if crop_data == null:

@@ -129,7 +129,6 @@ texture = ExtResource("2_5cagp")
 1:1/0/terrains_peering_bit/top_right_corner = 0
 1:1/0/custom_data_0 = true
 1:1/1 = 1
-1:1/1/modulate = Color(0.92, 0.96, 0.9, 1)
 1:1/1/probability = 0.0
 1:1/1/terrain_set = 0
 1:1/1/terrain = 0
