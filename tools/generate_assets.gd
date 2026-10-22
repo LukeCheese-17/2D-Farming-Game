@@ -8,13 +8,23 @@ const OUT := "res://assets/Generated/"
 const INK := Color(0.17, 0.12, 0.17)
 const HALO := Color(0.96, 0.93, 0.84)
 const MIX_RATE := 22050
+# Weathered fence wood, lightest (sawn tops) to the outline.
+const FENCE_TOP := Color(0.76, 0.68, 0.54)
+const FENCE_LIGHT := Color(0.65, 0.54, 0.4)
+const FENCE_MID := Color(0.55, 0.44, 0.32)
+const FENCE_DARK := Color(0.43, 0.33, 0.26)
+const FENCE_EDGE := Color(0.32, 0.24, 0.19)
+const GRASS_BLADE := Color("78a158")
 
 var _plants: Image
 var _materials: Image
+## For paths, fences and grass edges, so they don't shift the other assets' random looks.
+var _rng := RandomNumberGenerator.new()
 
 
 func _initialize() -> void:
 	seed(1234)
+	_rng.seed = 1234
 	_plants = Image.load_from_file(ProjectSettings.globalize_path("res://assets/Objects/Basic_Plants.png"))
 	_plants.convert(Image.FORMAT_RGBA8)
 	_materials = Image.load_from_file(ProjectSettings.globalize_path("res://assets/Objects/Basic_tools_and_meterials.png"))
@@ -257,9 +267,9 @@ func _branch(img: Image, from: Vector2, to: Vector2, width: int) -> void:
 	for i in steps + 1:
 		var p := from.lerp(to, float(i) / steps).round()
 		for w in width:
-			var color := WOOD_DARK if w == width - 1 and width > 1 else WOOD
+			var color := FENCE_DARK if w == width - 1 and width > 1 else WOOD
 			if width == 1:
-				color = WOOD if i % 3 != 2 else WOOD_DARK
+				color = WOOD if i % 3 != 2 else FENCE_DARK
 			if upright:
 				_px(img, int(p.x) + w - width / 2, int(p.y), color)
 			else:
@@ -317,7 +327,7 @@ func _restyle_trunk(img: Image, rect: Rect2i) -> void:
 		for x in range(rect.position.x, rect.end.x):
 			var c := img.get_pixel(x, y)
 			if c.a > 0.0 and c.h > 0.03 and c.h < 0.16 and c.s > 0.3:
-				img.set_pixel(x, y, WOOD if c.v > 0.55 else WOOD_DARK)
+				img.set_pixel(x, y, WOOD if c.v > 0.55 else FENCE_DARK)
 
 
 ## Flattens a sprite to three colours (light, mid, dark) by brightness, drops the pale
@@ -1041,15 +1051,24 @@ func _make_props() -> void:
 			_ellipse(plain, Vector2(v * 16 + 9, 8), Vector2(2, 1.5), Color(0.6, 0.58, 0.55))
 	# Column = which sides join more path (1 up, 2 right, 4 down, 8 left), row = variant.
 	var path := _img(256, 64)
+	var tuft := Color("a4c263")
 	for v in 4:
 		for sides in 16:
+			var insets := [_ragged_edge(), _ragged_edge(), _ragged_edge(), _ragged_edge()]
 			for y in 16:
 				for x in 16:
-					var edge := _path_edge(x, y, sides)
-					if edge < 0:
+					var depth := _path_depth(x, y, sides, insets)
+					if depth < 0.0:
 						continue
 					var color := plain.get_pixel(v * 16 + x, y)
-					path.set_pixel(sides * 16 + x, v * 16 + y, color.darkened(0.18) if edge == 1 else color)
+					if depth < 1.0:
+						color = color.darkened(0.16)
+						# Grass creeping over the worn edge.
+						if _rng.randf() < 0.22:
+							color = tuft
+					elif depth < 2.0:
+						color = color.darkened(0.07)
+					path.set_pixel(sides * 16 + x, v * 16 + y, color)
 	_save(path, "path")
 
 	var anvil := _img(16, 16)
@@ -1060,10 +1079,21 @@ func _make_props() -> void:
 	_save(anvil, "anvil")
 
 
-## For a pixel of a path tile: -1 cut away, 1 the darker edge, 0 inside. Sides
-## that don't join more path get an edge, and corners between two of them are rounded.
-func _path_edge(x: int, y: int, sides: int) -> int:
-	const RADIUS := 5.0
+## How far each pixel along a tile side the path edge wanders in, 0-2 px. It is 1 at
+## both ends so the edge lines up with the next tile.
+func _ragged_edge() -> Array[float]:
+	var insets: Array[float] = []
+	var inset := 1.0
+	for i in 16:
+		inset = clampf(inset + _rng.randf_range(-0.7, 0.7), 0.0, 2.0)
+		insets.append(1.0 if i == 0 or i == 15 else inset)
+	return insets
+
+
+## For a pixel of a path tile: how far it is inside the path, negative when cut away.
+## Sides that don't join more path get a worn, ragged edge; corners between two of them are rounded.
+func _path_depth(x: int, y: int, sides: int, insets: Array) -> float:
+	const RADIUS := 6.0
 	var open_up := sides & 1 == 0
 	var open_right := sides & 2 == 0
 	var open_down := sides & 4 == 0
@@ -1078,13 +1108,17 @@ func _path_edge(x: int, y: int, sides: int) -> int:
 	elif x < RADIUS and y >= 16 - RADIUS and open_left and open_down:
 		corner = Vector2(RADIUS, 16 - RADIUS)
 	if corner.x >= 0.0:
-		var distance := Vector2(x + 0.5, y + 0.5).distance_to(corner)
-		if distance > RADIUS:
-			return -1
-		return 1 if distance > RADIUS - 1.2 else 0
-	if (open_up and y == 0) or (open_down and y == 15) or (open_left and x == 0) or (open_right and x == 15):
-		return 1
-	return 0
+		return RADIUS - Vector2(x + 0.5, y + 0.5).distance_to(corner) - _rng.randf_range(0.0, 1.2)
+	var depth := 99.0
+	if open_up:
+		depth = minf(depth, y - insets[0][x])
+	if open_down:
+		depth = minf(depth, 15 - y - insets[1][x])
+	if open_left:
+		depth = minf(depth, x - insets[2][y])
+	if open_right:
+		depth = minf(depth, 15 - x - insets[3][y])
+	return depth
 
 
 # --- HUD icons ---
@@ -1209,36 +1243,147 @@ func _make_music() -> void:
 		out[i] = bell * 0.16 + hum * 0.08 * (0.6 + 0.4 * swell)
 	_wav(out, "music", true)
 
+# --- Fences and grass edges: weathered wood, ragged grass ---
+
+## Same layout as Fences.png. Column: 0 no rails, 1 rails right, 2 both sides, 3 left.
+## Row: 0 joins down, 1 up and down, 2 up, 3 alone.
+func _make_fences() -> void:
+	var img := _img(64, 64)
+	for ty in 4:
+		for tx in 4:
+			var o := Vector2i(tx * 16, ty * 16)
+			if tx == 1 or tx == 2:
+				_fence_rails(img, o.x + 10, o.y)
+			if tx == 2 or tx == 3:
+				_fence_rails(img, o.x, o.y)
+			if ty < 2:
+				_rect(img, o.x + 7, o.y + 11, 2, 5, FENCE_MID)
+				_rect(img, o.x + 7, o.y + 11, 1, 5, FENCE_LIGHT)
+			if ty == 1 or ty == 2:
+				_rect(img, o.x + 7, o.y, 2, 2, FENCE_MID)
+				_rect(img, o.x + 7, o.y, 1, 2, FENCE_LIGHT)
+			# A rough post, a little shorter or taller, with a split top and a knot.
+			var top := 1 + _rng.randi_range(0, 1)
+			_rect(img, o.x + 6, o.y + top, 4, 11 - top, FENCE_MID)
+			_rect(img, o.x + 6, o.y + top, 1, 11 - top, FENCE_LIGHT)
+			_rect(img, o.x + 9, o.y + top, 1, 11 - top, FENCE_DARK)
+			_rect(img, o.x + 6, o.y + top, 4, 2, FENCE_TOP)
+			_px(img, o.x + 7 + _rng.randi_range(0, 1), o.y + top, FENCE_DARK)
+			_px(img, o.x + 7 + _rng.randi_range(0, 1), o.y + top + 4 + _rng.randi_range(0, 3), FENCE_DARK)
+	_wood_grain(img)
+	_outline(img, FENCE_EDGE)
+	for ty in 4:
+		for tx in 4:
+			var o := Vector2i(tx * 16, ty * 16)
+			# Moss low on the post, a shadow and grass at its foot.
+			for i in 3:
+				_px(img, o.x + 6 + _rng.randi_range(0, 3), o.y + 8 + _rng.randi_range(0, 2), MOSS)
+			for x in range(6, 10):
+				if img.get_pixel(o.x + x, o.y + 12).a == 0.0:
+					img.set_pixel(o.x + x, o.y + 12, Color(0, 0, 0, 0.22))
+			_px(img, o.x + 5, o.y + 11, GRASS_BLADE)
+			_px(img, o.x + 5, o.y + 10, GRASS_BLADE)
+			_px(img, o.x + 10, o.y + 11, GRASS_BLADE)
+	_save(img, "fences")
+
+
+func _fence_rails(img: Image, x: int, y: int) -> void:
+	for rail_y: int in [4, 8]:
+		_rect(img, x, y + rail_y, 6, 2, FENCE_MID)
+		_rect(img, x, y + rail_y, 6, 1, FENCE_LIGHT)
+
+
+## Grain streaks and blotches so the wood doesn't look painted.
+func _wood_grain(img: Image) -> void:
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			if c.a == 0.0:
+				continue
+			var n := _rng.randf_range(-0.03, 0.03)
+			if _rng.randf() < 0.1:
+				n -= 0.07
+			img.set_pixel(x, y, Color(c.r + n, c.g + n, c.b + n * 0.8, c.a))
+
+
+## Grass.png with softer edge bands, a ragged rim and blades poking out over the
+## ground or water. Only edges inside a tile change, so the tiles still join up.
+func _make_grass() -> void:
+	var src := Image.load_from_file(ProjectSettings.globalize_path("res://assets/Tilesets/Grass.png"))
+	src.convert(Image.FORMAT_RGBA8)
+	var img := src.duplicate() as Image
+	var rim := Color("78a158")
+	var band := Color("a4c263")
+	var fill := Color("c0d470")
+	var w := src.get_width()
+	var h := src.get_height()
+	var at := func(x: int, y: int, from: Vector2i) -> Color:
+		# Outside the tile counts as more grass: the neighbouring tile carries on.
+		if x < 0 or y < 0 or x >= w or y >= h or x / 16 != from.x / 16 or y / 16 != from.y / 16:
+			return fill
+		return src.get_pixel(x, y)
+	for y in h:
+		for x in w:
+			var c := src.get_pixel(x, y)
+			var p := Vector2i(x, y)
+			if c == band:
+				for o: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+					if at.call(x + o.x, y + o.y, p) == fill and _rng.randf() < 0.3:
+						img.set_pixel(x, y, fill)
+			elif c == rim:
+				var outer := false
+				for o: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+					var n: Color = at.call(x + o.x, y + o.y, p)
+					if n.a == 0.0:
+						outer = true
+						var q := p + o
+						# A blade or two of grass sticking out.
+						if _rng.randf() < 0.2:
+							img.set_pixelv(q, rim)
+							var q2 := q + o
+							if _rng.randf() < 0.5 and at.call(q2.x, q2.y, p).a == 0.0 and q2.x / 16 == x / 16 and q2.y / 16 == y / 16:
+								img.set_pixelv(q2, rim)
+				if not outer:
+					img.set_pixel(x, y, band if _rng.randf() < 0.7 else rim)
+				elif _rng.randf() < 0.1:
+					img.set_pixel(x, y, Color(0, 0, 0, 0))
+	_save(img, "grass")
+
+
 # --- Ranch: gates, the new animals and what they give (ANM-5..ANM-8) ---
 
 func _make_ranch() -> void:
 	# Gates, 2x2 tiles: closed and open, across (top row) and up-down (bottom row).
 	var gate := _img(32, 32)
-	var light := Color(0.86, 0.72, 0.52)
-	var mid := Color(0.7, 0.52, 0.36)
-	var dark := Color(0.5, 0.34, 0.25)
+	var light := FENCE_TOP
+	var mid := FENCE_MID
+	var dark := FENCE_DARK
 	for x: int in [0, 14, 16, 30]:
-		_rect(gate, x, 3, 2, 11, dark)
-		_rect(gate, x, 3, 2, 1, light)
-	_rect(gate, 2, 5, 12, 2, mid)
-	_rect(gate, 2, 9, 12, 2, mid)
-	_line(gate, Vector2(2, 10), Vector2(13, 6), dark)
-	_rect(gate, 2, 5, 12, 1, light)
+		_rect(gate, x, 2, 2, 10, dark)
+		_rect(gate, x, 2, 2, 1, light)
+	_rect(gate, 2, 4, 12, 2, mid)
+	_rect(gate, 2, 8, 12, 2, mid)
+	_line(gate, Vector2(2, 9), Vector2(13, 5), dark)
+	_rect(gate, 2, 4, 12, 1, FENCE_LIGHT)
+	_rect(gate, 2, 8, 12, 1, FENCE_LIGHT)
 	# Open: swung towards you, seen edge-on.
-	_rect(gate, 18, 6, 3, 9, mid)
-	_rect(gate, 18, 6, 3, 1, light)
-	_line(gate, Vector2(19, 7), Vector2(19, 14), dark)
+	_rect(gate, 18, 5, 3, 9, mid)
+	_rect(gate, 18, 5, 3, 1, light)
+	_line(gate, Vector2(19, 6), Vector2(19, 13), dark)
 	for y: int in [16, 30]:
 		_rect(gate, 5, y, 6, 2, dark)
 		_rect(gate, 21, y, 6, 2, dark)
 		_rect(gate, 5, y, 6, 1, light)
 	_rect(gate, 6, 18, 4, 12, mid)
 	_line(gate, Vector2(6, 19), Vector2(9, 28), dark)
-	_rect(gate, 6, 18, 1, 12, light)
+	_rect(gate, 6, 18, 1, 12, FENCE_LIGHT)
 	_rect(gate, 23, 18, 8, 3, mid)
-	_rect(gate, 23, 18, 8, 1, light)
-	_outline(gate, Color(0.36, 0.24, 0.2))
+	_rect(gate, 23, 18, 8, 1, FENCE_LIGHT)
+	_wood_grain(gate)
+	_outline(gate, FENCE_EDGE)
 	_save(gate, "gate")
+	_make_fences()
+	_make_grass()
 
 	# Animals: idle, idle, walk, walk, facing right, feet on the bottom row.
 	var duck: Array[Image] = []

@@ -1,11 +1,11 @@
 [gd_resource type="TileSet" format=3 uid="uid://b5mmmmeduschn"]
 
 [ext_resource type="Texture2D" uid="uid://d2desme2mxprm" path="res://assets/Tilesets/Water.png" id="1_qh4eu"]
-[ext_resource type="Texture2D" uid="uid://wp88lruj8s8b" path="res://assets/Tilesets/Grass.png" id="2_5cagp"]
+[ext_resource type="Texture2D" path="res://assets/Generated/grass.png" id="2_5cagp"]
 [ext_resource type="Texture2D" uid="uid://dk47r08lpyp6n" path="res://assets/Tilesets/Tilled_Dirt_Wide_v2.png" id="3_y6usg"]
 [ext_resource type="Texture2D" uid="uid://c7q4onp01ddxn" path="res://assets/Tilesets/Tilled_Dirt_Wide.png" id="4_j0so5"]
 [ext_resource type="Texture2D" path="res://assets/Generated/nature.png" id="5_lqib2"]
-[ext_resource type="Texture2D" uid="uid://gd2108l2cvv3" path="res://assets/Tilesets/Fences.png" id="6_fences"]
+[ext_resource type="Texture2D" path="res://assets/Generated/fences.png" id="6_fences"]
 [ext_resource type="Texture2D" path="res://assets/Generated/path.png" id="7_path"]
 [ext_resource type="Texture2D" path="res://assets/Objects/Wood_Bridge.png" id="8_bridge"]
 [ext_resource type="Texture2D" path="res://assets/Generated/gate.png" id="9_gates"]
