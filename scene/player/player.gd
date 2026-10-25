@@ -129,7 +129,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		use_held_item()
 	elif event.is_action_pressed("use_tool") and indoors:
 		_eat_held_item()
-	elif event.is_action_pressed("interact") and not _interactables.is_empty():
+	elif event.is_action_pressed("interact") and not _interactables.is_empty() and not UI.just_closed():
 		_interactables.back().interact()
 
 

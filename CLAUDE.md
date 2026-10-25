@@ -19,5 +19,6 @@ Godot 4.6 GDScript, top-down pixel-art farming game with a no-monster horror moo
 ## Tools and commands (Windows, PowerShell)
 - git is not on PATH: `$g = (Resolve-Path "$env:LOCALAPPDATA\GitHubDesktop\app-*\resources\app\git\cmd\git.exe" | Select-Object -Last 1).Path`. Use `git commit -F <file>` for multi-line messages. gh CLI handles push auth.
 - Godot: `$godot = "C:\Users\lukea\Downloads\Godot_v4.6.3-stable_mono_win64\Godot_v4.6.3-stable_mono_win64\Godot_v4.6.3-stable_mono_win64_console.exe"`
+- Web export needs the non-C# editor (the mono build refuses): `& "C:\Users\lukea\Downloads\Godot_v4.6.3-stable_win64\Godot_v4.6.3-stable_win64_console.exe" --headless --path . --export-release "Web" build/web/index.html`
 - Re-import after adding scripts/assets: `& $godot --headless --path . --import`
 - Gameplay test (kept outside the repo): `& $godot --headless --path . --quit-after 9000 -s "C:\Users\lukea\.claude\scheduled-tasks\farm-test-and-cleanup\test_loop.gd" *> "$env:TEMP\t.txt"`, then check for `FAIL`/`RESULT`/`ERROR`. In `-s` mode autoload types aren't known at compile time, so the test uses untyped vars.

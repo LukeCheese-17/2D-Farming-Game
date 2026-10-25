@@ -6,6 +6,8 @@ extends CanvasLayer
 const MESSAGE_TIME := 2.0
 const METER_SIZE := Vector2(46, 5)
 const MENU_WIDTH := 300.0
+## New players see the controls (and "Space: use" next to the held item) until this day ends.
+const HINT_LAST_DAY := 2
 
 @onready var _root: Control = $Root
 @onready var _status: VBoxContainer = $Root/Status
@@ -39,6 +41,7 @@ var _choice_index := 0
 var _opened_frame := -1
 
 var _quest_label := Label.new()
+var _controls_hint := Label.new()
 var _meters: Dictionary[String, ColorRect] = {}
 var _menu := PanelContainer.new()
 var _menu_title := Label.new()
@@ -63,6 +66,7 @@ func _ready() -> void:
 	_build_menu()
 	_build_text_box()
 	_build_slots()
+	_build_controls_hint()
 	_ui_move.stream = preload("res://assets/Generated/ui_move.wav")
 	_ui_select.stream = preload("res://assets/Generated/ui_select.wav")
 	for sound in [_ui_move, _ui_select]:
@@ -71,6 +75,7 @@ func _ready() -> void:
 	GameState.time_changed.connect(func(_minutes: int) -> void: _refresh_clock())
 	GameState.day_changed.connect(func(_day: int) -> void: _refresh_clock())
 	GameState.day_changed.connect(func(_day: int) -> void: _refresh_quests())
+	GameState.day_changed.connect(func(_day: int) -> void: _refresh_slots())
 	GameState.money_changed.connect(func(_money: int) -> void: _refresh_money())
 	GameState.needs_changed.connect(_refresh_meters)
 	GameState.time_changed.connect(func(_minutes: int) -> void: _refresh_main())
@@ -265,6 +270,27 @@ func _refresh_slots() -> void:
 		slot.set_selected(slot.index == _inventory.selected)
 	var item := _inventory.get_selected_item()
 	_item_label.text = item.display_name if item else "Empty hand"
+	if item and _show_hints():
+		_item_label.text += "  (Space: use)"
+	_controls_hint.visible = _show_hints() and _hotbar.visible
+
+
+func _show_hints() -> bool:
+	return GameState.day <= HINT_LAST_DAY
+
+
+## UI-6: a line of controls in the corner for the first days, so nobody has to find them in Options.
+func _build_controls_hint() -> void:
+	_controls_hint.text = "WASD: walk\nSpace: use item\nE: talk / open\n1-0: pick item\nTab: bag\nEsc: pause"
+	_controls_hint.add_theme_font_size_override("font_size", 8)
+	_controls_hint.add_theme_color_override("font_color", UITheme.DIM_TEXT)
+	_controls_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_controls_hint.offset_left = 6.0
+	_controls_hint.offset_top = -70.0
+	_controls_hint.offset_bottom = -4.0
+	_controls_hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_controls_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_controls_hint)
 
 
 ## Click to pick up a stack, click again to put it down (merging or swapping).
@@ -338,6 +364,7 @@ func _on_dialogue_finished(_choice: int) -> void:
 func _set_hotbar_visible(shown: bool) -> void:
 	_hotbar.visible = shown
 	_item_label.visible = shown
+	_controls_hint.visible = shown and _show_hints()
 
 
 func _handle_dialogue_input(event: InputEvent) -> void:
@@ -450,6 +477,10 @@ func _handle_menu_input(event: InputEvent) -> void:
 		_ui_move.play()
 		_refresh_menu()
 	elif event.is_action_pressed("interact") or event.is_action_pressed("use_tool") or event.is_action_pressed("ui_accept"):
+		# A menu opened straight from another one (the phone's shop) ignores a mashed key.
+		if UI.just_closed():
+			get_viewport().set_input_as_handled()
+			return
 		_ui_select.play()
 		get_viewport().set_input_as_handled()
 		UI.end_menu(_menu_index)

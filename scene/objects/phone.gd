@@ -163,7 +163,8 @@ func _call() -> void:
 
 func _order_supplies() -> void:
 	var shop := GameState.SUPPLIES
-	var index := 0
+	# Start on "Back" so mashing E through a call can't spend the player's money (UI-7).
+	var index := shop.stock.size()
 	while true:
 		var options: Array[String] = []
 		for item in shop.stock:

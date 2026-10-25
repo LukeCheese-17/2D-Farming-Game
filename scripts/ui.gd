@@ -37,6 +37,11 @@ var volume := 0.8
 var fullscreen := false
 var player_look := "updated"
 
+## How long after a dialogue or menu closes the interact key is ignored, so mashing E
+## through a conversation doesn't start it again (and buy things in the next menu).
+const CLOSE_GRACE_MSEC := 400
+var _closed_msec := -CLOSE_GRACE_MSEC
+
 
 func _ready() -> void:
 	load_options()
@@ -45,6 +50,11 @@ func _ready() -> void:
 ## True while a dialogue, menu or the backpack is open: the player can't move and time stops.
 func is_blocking() -> bool:
 	return in_dialogue or in_menu or in_text or backpack_open
+
+
+## True for a moment after a dialogue or menu closed.
+func just_closed() -> bool:
+	return Time.get_ticks_msec() - _closed_msec < CLOSE_GRACE_MSEC
 
 
 func post_message(text: String) -> void:
@@ -70,6 +80,7 @@ func show_dialogue(lines: Array, choices: Array = []) -> void:
 ## Called by the HUD when the player closes the dialogue.
 func end_dialogue(choice := -1) -> void:
 	in_dialogue = false
+	_closed_msec = Time.get_ticks_msec()
 	dialogue_finished.emit(choice)
 
 
@@ -81,6 +92,7 @@ func show_menu(title: String, options: Array[String], footer := "", selected := 
 
 func end_menu(index := -1) -> void:
 	in_menu = false
+	_closed_msec = Time.get_ticks_msec()
 	menu_finished.emit(index)
 
 

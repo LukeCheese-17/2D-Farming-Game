@@ -236,6 +236,8 @@ The mine (MIN) is the one exception: it has enemies.
 | UI-5 | New Game plays a wordless intro (show, don't tell): the player is fired from an office job, ends up homeless, finds a flyer for cheap land, buys it with the last of their money and arrives at the run-down farm. It can be skipped. |
 | UI-3 | Pressing Esc pauses the game and opens a pause menu (Resume, Options, Save, Quit to home screen). |
 | UI-4 | The pause menu has options (e.g. volume, fullscreen, controls). |
+| UI-6 | On days 1–2, a line of controls is shown in the bottom-left corner, and the held item's name says "(Space: use)", so new players learn the keys without opening Options. |
+| UI-7 | Mashing E can't chain into purchases: for a moment after a dialogue or menu closes, E doesn't start a new interaction, and a menu that opens straight from another one ignores a mashed key. The phone's supply menu opens with "Back" selected. |
 | SAV-1 | The game can be saved and loaded (farm, inventory, money, day, animals, quests, village progress). |
 | SAV-2 | There are three save slots. New Game and Continue ask for a slot; starting a new game on a used slot asks first. |
 
